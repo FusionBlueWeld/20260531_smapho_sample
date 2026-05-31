@@ -479,8 +479,8 @@ function go(dir) {
   busy = true;
 
   const el = document.getElementById('pg');
-  const oc = dir > 0 ? 'fo' : 'bo';
-  const ic = dir > 0 ? 'fi' : 'bi';
+  const oc = dir > 0 ? 'bo' : 'fo';
+  const ic = dir > 0 ? 'bi' : 'fi';
 
   el.classList.add(oc);
   setTimeout(() => {
@@ -494,13 +494,13 @@ function go(dir) {
 }
 
 // ═══════════════════════════════════════════════
-//  Tap zones: right = next, left = prev
+//  Tap zones: left = next, right = prev  (日本語書籍方向)
 // ═══════════════════════════════════════════════
-document.getElementById('tzl').addEventListener('click', () => go(-1));
-document.getElementById('tzr').addEventListener('click', () => go(1));
+document.getElementById('tzl').addEventListener('click', () => go(1));
+document.getElementById('tzr').addEventListener('click', () => go(-1));
 
 // ═══════════════════════════════════════════════
-//  Swipe: left = next, right = prev
+//  Swipe: right = next, left = prev  (日本語書籍方向)
 // ═══════════════════════════════════════════════
 let sx = 0, sy = 0;
 const pw = document.getElementById('pw');
@@ -511,7 +511,7 @@ pw.addEventListener('touchstart', e => {
 pw.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - sx;
   const dy = e.changedTouches[0].clientY - sy;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx < 0 ? 1 : -1);
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx > 0 ? 1 : -1);
 }, { passive: true });
 
 // ═══════════════════════════════════════════════
