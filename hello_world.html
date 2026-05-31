@@ -101,9 +101,11 @@ scene.add(group);
 const isMobile = innerWidth < 768;
 camera.position.z = isMobile ? 14 : 10;
 
-// Touch / mouse rotation
+// Touch / mouse rotation + pinch zoom
 let targetRotX = 0, targetRotY = 0;
 let isDragging = false, lastX = 0, lastY = 0;
+const minZ = 4, maxZ = 28;
+let targetZ = isMobile ? 14 : 10;
 
 function onStart(x, y) { isDragging = true; lastX = x; lastY = y; }
 function onMove(x, y) {
@@ -115,12 +117,48 @@ function onMove(x, y) {
 }
 function onEnd() { isDragging = false; }
 
+// Pinch zoom
+let lastPinchDist = null;
+function getPinchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
 renderer.domElement.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
 renderer.domElement.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
 renderer.domElement.addEventListener('mouseup', onEnd);
-renderer.domElement.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: false });
-renderer.domElement.addEventListener('touchmove', e => { e.preventDefault(); const t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: false });
-renderer.domElement.addEventListener('touchend', onEnd);
+
+renderer.domElement.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (e.touches.length === 2) {
+    isDragging = false;
+    lastPinchDist = getPinchDist(e.touches);
+  } else {
+    lastPinchDist = null;
+    onStart(e.touches[0].clientX, e.touches[0].clientY);
+  }
+}, { passive: false });
+
+renderer.domElement.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 2) {
+    const dist = getPinchDist(e.touches);
+    if (lastPinchDist !== null) {
+      const delta = lastPinchDist - dist;
+      targetZ = Math.max(minZ, Math.min(maxZ, targetZ + delta * 0.05));
+    }
+    lastPinchDist = dist;
+  } else {
+    lastPinchDist = null;
+    onMove(e.touches[0].clientX, e.touches[0].clientY);
+  }
+}, { passive: false });
+
+renderer.domElement.addEventListener('touchend', e => {
+  if (e.touches.length < 2) lastPinchDist = null;
+  if (e.touches.length === 0) onEnd();
+});
 
 // Animation
 const clock = new THREE.Clock();
@@ -129,6 +167,7 @@ function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
 
+  camera.position.z += (targetZ - camera.position.z) * 0.08;
   group.rotation.x += (targetRotX - group.rotation.x) * 0.05;
   group.rotation.y += (targetRotY - group.rotation.y) * 0.05;
 
@@ -159,7 +198,6 @@ window.addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
-  camera.position.z = innerWidth < 768 ? 14 : 10;
 });
 </script>
 </body>
