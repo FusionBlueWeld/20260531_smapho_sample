@@ -6,7 +6,7 @@
 <title>Hello World</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { overflow: hidden; background: #000; touch-action: none; }
+  body { overflow: hidden; background: #fff; touch-action: none; }
   canvas { display: block; width: 100vw; height: 100vh; }
 </style>
 </head>
@@ -20,7 +20,7 @@ camera.position.set(0, 0, 8);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setClearColor(0x0a0a0a);
+renderer.setClearColor(0xffffff);
 document.body.appendChild(renderer.domElement);
 
 // Lights
