@@ -38,7 +38,7 @@
     }
 
     /* 3-D perspective wrapper */
-    #pw { perspective: 1500px; perspective-origin: 28% 50%; }
+    #pw { perspective: 1500px; perspective-origin: 72% 50%; }
 
     /* ── The Page ────────────────────────────────── */
     .page {
@@ -46,21 +46,21 @@
       --h: calc(var(--w) * 1.418);
       width: var(--w); height: var(--h);
       position: relative;
-      border-radius: 2px 5px 5px 2px;
+      border-radius: 5px 2px 2px 5px;
       overflow: hidden;
-      transform-origin: 0% 50%;   /* left-edge pivot → opens right */
+      transform-origin: 100% 50%;  /* right-edge pivot → opens left→right */
       will-change: transform;
       backface-visibility: hidden;
       box-shadow:
-        -12px 6px 24px rgba(0,0,0,.7),
-         2px  4px 16px rgba(0,0,0,.4),
+         12px 6px 24px rgba(0,0,0,.7),
+        -2px  4px 16px rgba(0,0,0,.4),
          0    0  0 1px rgba(0,0,0,.3);
     }
 
     /* ── Paper base ──────────────────────────────── */
     .pbg {
       position: absolute; inset: 0;
-      background: linear-gradient(to right,
+      background: linear-gradient(to left,
         #d8c9a5 0%, #ece0c3 5%, #f5edd8 25%, #f7f0db 60%, #f4ecd7 100%);
     }
     /* paper-grain noise overlay */
@@ -72,16 +72,16 @@
       pointer-events: none;
     }
 
-    /* spine binding shadow */
+    /* spine binding shadow — now on RIGHT */
     .psp {
-      position: absolute; top: 0; left: 0;
+      position: absolute; top: 0; right: 0;
       width: 22px; height: 100%; z-index: 5; pointer-events: none;
-      background: linear-gradient(to right,
+      background: linear-gradient(to left,
         rgba(0,0,0,.32) 0%, rgba(0,0,0,.06) 55%, transparent 100%);
     }
-    /* right edge shadow */
+    /* left edge shadow */
     .pedge {
-      position: absolute; top: 0; right: 0;
+      position: absolute; top: 0; left: 0;
       width: 3px; height: 100%; z-index: 5; pointer-events: none;
       background: rgba(0,0,0,.08);
     }
@@ -89,7 +89,7 @@
     /* ── Header ──────────────────────────────────── */
     .phdr {
       position: absolute; top: 0; left: 0; right: 0; height: 38px;
-      display: flex; align-items: center; padding: 0 18px 0 26px;
+      display: flex; align-items: center; padding: 0 26px 0 18px;
       border-bottom: 1px solid rgba(110,80,45,.18); z-index: 3;
     }
     .phdr-ch { font-size: 10.5px; color: #7a6045; letter-spacing: .18em; }
@@ -104,11 +104,11 @@
       display: flex; align-items: center; padding: 0 18px;
       border-top: 1px solid rgba(110,80,45,.14); z-index: 3;
     }
-    .pnum { margin-left: auto; font-size: 11px; color: #8a6840; letter-spacing: .08em; }
+    .pnum { margin-right: auto; font-size: 11px; color: #8a6840; letter-spacing: .08em; }
 
     /* ── Body text (vertical 縦書き) ──────────────── */
     .pbody {
-      position: absolute; top: 38px; bottom: 30px; left: 22px; right: 0;
+      position: absolute; top: 38px; bottom: 30px; left: 0; right: 22px;
       writing-mode: vertical-rl;
       text-orientation: upright;
       overflow: hidden;
@@ -135,8 +135,8 @@
       border: .5px solid rgba(201,168,76,.22);
     }
     .cvr-sp {
-      position: absolute; top: 0; left: 0; width: 18px; height: 100%;
-      background: linear-gradient(to right,
+      position: absolute; top: 0; right: 0; width: 18px; height: 100%;
+      background: linear-gradient(to left,
         rgba(8,18,32,.95) 0%, rgba(8,18,32,.4) 50%, transparent 100%);
       z-index: 4; pointer-events: none;
     }
@@ -479,8 +479,8 @@ function go(dir) {
   busy = true;
 
   const el = document.getElementById('pg');
-  const oc = dir > 0 ? 'bo' : 'fo';
-  const ic = dir > 0 ? 'bi' : 'fi';
+  const oc = dir > 0 ? 'fo' : 'bo';
+  const ic = dir > 0 ? 'fi' : 'bi';
 
   el.classList.add(oc);
   setTimeout(() => {
