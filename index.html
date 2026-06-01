@@ -14,6 +14,8 @@
     }
     html, body { height: 100%; overflow: hidden; }
     body {
+      --w: min(46vw, 320px);
+      --h: calc(var(--w) * 1.46);
       font-family: 'Noto Serif JP','Yu Mincho','游明朝','Hiragino Mincho ProN',
                    'Hiragino Mincho Pro',serif;
       display: flex; flex-direction: column;
@@ -26,10 +28,12 @@
         repeating-linear-gradient(90.8deg,
           transparent 0, transparent 14px,
           rgba(255,190,80,.008) 14px, rgba(255,190,80,.008) 15px),
-        radial-gradient(ellipse at 35% 45%,
+        radial-gradient(ellipse at 50% 45%,
           #2a1208 0%, #120805 65%, #090402 100%);
       user-select: none; -webkit-user-select: none;
     }
+    @media (min-height: 760px) { body { --w: min(48vw, 340px); } }
+    @media (max-height: 620px) { body { --w: min(42vw, 260px); } }
 
     /* ── Book scene ──────────────────────────────── */
     #scene {
@@ -37,25 +41,28 @@
       align-items: center; gap: 14px;
     }
 
-    /* 3-D perspective wrapper */
-    #pw { perspective: 1500px; perspective-origin: 72% 50%; }
+    /* spread wrapper (two page slots, spine at the centre) */
+    #pw {
+      position: relative;
+      width: calc(var(--w) * 2);
+      height: var(--h);
+      perspective: 1600px;
+      perspective-origin: 50% 50%;
+    }
 
     /* ── The Page ────────────────────────────────── */
     .page {
-      --w: min(90vw, 352px);
-      --h: calc(var(--w) * 1.418);
+      position: absolute; top: 0;
       width: var(--w); height: var(--h);
-      position: relative;
-      border-radius: 5px 2px 2px 5px;
       overflow: hidden;
-      transform-origin: 100% 50%;  /* right-edge pivot → opens left→right */
-      will-change: transform;
+      will-change: transform, opacity;
       backface-visibility: hidden;
-      box-shadow:
-         12px 6px 24px rgba(0,0,0,.7),
-        -2px  4px 16px rgba(0,0,0,.4),
-         0    0  0 1px rgba(0,0,0,.3);
+      box-shadow: 0 9px 26px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.25);
     }
+    /* slot positions + pivot (spine = centre line) */
+    .page.slot-left   { left: 0;                  transform-origin: 100% 50%; border-radius: 6px 2px 2px 6px; }
+    .page.slot-right  { left: var(--w);           transform-origin: 0% 50%;   border-radius: 2px 6px 6px 2px; }
+    .page.slot-center { left: calc(var(--w) / 2); transform-origin: 50% 50%;  border-radius: 5px; }
 
     /* ── Paper base ──────────────────────────────── */
     .pbg {
@@ -63,207 +70,151 @@
       background: linear-gradient(to left,
         #d8c9a5 0%, #ece0c3 5%, #f5edd8 25%, #f7f0db 60%, #f4ecd7 100%);
     }
-    /* paper-grain noise overlay */
+    .slot-right .pbg {
+      background: linear-gradient(to right,
+        #d8c9a5 0%, #ece0c3 5%, #f5edd8 25%, #f7f0db 60%, #f4ecd7 100%);
+    }
     .pbg::after {
       content: ''; position: absolute; inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 340'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 .87 0 0 0 0 .79 0 0 0 0 .63 0 0 0 .17 0'/%3E%3C/filter%3E%3Crect width='240' height='340' filter='url(%23p)'/%3E%3C/svg%3E");
-      background-size: cover;
-      mix-blend-mode: multiply;
-      pointer-events: none;
+      background-size: cover; mix-blend-mode: multiply; pointer-events: none;
     }
 
-    /* spine binding shadow — now on RIGHT */
-    .psp {
-      position: absolute; top: 0; right: 0;
-      width: 22px; height: 100%; z-index: 5; pointer-events: none;
-      background: linear-gradient(to left,
-        rgba(0,0,0,.32) 0%, rgba(0,0,0,.06) 55%, transparent 100%);
-    }
-    /* left edge shadow */
-    .pedge {
-      position: absolute; top: 0; left: 0;
-      width: 3px; height: 100%; z-index: 5; pointer-events: none;
-      background: rgba(0,0,0,.08);
-    }
+    /* spine + outer edge shadows (sides depend on the slot) */
+    .psp { position: absolute; top: 0; width: 20px; height: 100%; z-index: 5; pointer-events: none; }
+    .pedge { position: absolute; top: 0; width: 3px; height: 100%; z-index: 5; pointer-events: none; background: rgba(0,0,0,.08); }
+    .slot-left  .psp  { right: 0; background: linear-gradient(to left,  rgba(0,0,0,.30), rgba(0,0,0,.05) 60%, transparent); }
+    .slot-left  .pedge{ left: 0; }
+    .slot-right .psp  { left: 0;  background: linear-gradient(to right, rgba(0,0,0,.30), rgba(0,0,0,.05) 60%, transparent); }
+    .slot-right .pedge{ right: 0; }
 
     /* ── Header ──────────────────────────────────── */
     .phdr {
-      position: absolute; top: 0; left: 0; right: 0; height: 38px;
-      display: flex; align-items: center; padding: 0 26px 0 18px;
+      position: absolute; top: 0; left: 0; right: 0; height: 30px;
+      display: flex; align-items: center; padding: 0 15px;
       border-bottom: 1px solid rgba(110,80,45,.18); z-index: 3;
     }
-    .phdr-ch { font-size: 10.5px; color: #7a6045; letter-spacing: .18em; }
-    .phdr-bk {
-      margin-left: auto; font-size: 10px;
-      color: #9a7a55; letter-spacing: .1em; opacity: .75;
-    }
+    .phdr-ch { font-size: 10px; color: #7a6045; letter-spacing: .12em; }
+    .phdr-bk { margin-left: auto; font-size: 9px; color: #9a7a55; letter-spacing: .08em; opacity: .7; }
 
     /* ── Footer ──────────────────────────────────── */
     .pftr {
-      position: absolute; bottom: 0; left: 0; right: 0; height: 30px;
-      display: flex; align-items: center; padding: 0 18px;
+      position: absolute; bottom: 0; left: 0; right: 0; height: 26px;
+      display: flex; align-items: center; padding: 0 15px;
       border-top: 1px solid rgba(110,80,45,.14); z-index: 3;
     }
-    .pnum { margin-right: auto; font-size: 11px; color: #8a6840; letter-spacing: .08em; }
+    .pnum { font-size: 11px; color: #8a6840; letter-spacing: .06em; }
+    .slot-left  .pnum { margin-right: auto; }   /* page number on outer edge */
+    .slot-right .pnum { margin-left: auto; }
+    .slot-center .pnum { margin: 0 auto; }
 
     /* ── Body text (vertical 縦書き) ──────────────── */
     .pbody {
-      position: absolute; top: 38px; bottom: 30px; left: 0; right: 22px;
-      writing-mode: vertical-rl;
-      text-orientation: upright;
-      overflow: hidden;
-      padding: 10px 7px;
-      color: #281e12; font-size: 13.5px; line-height: 2;
+      position: absolute; top: 30px; bottom: 26px;
+      writing-mode: vertical-rl; text-orientation: upright;
+      overflow: hidden; padding: 8px 4px;
+      color: #281e12; font-size: min(3.7vw, 14px); line-height: 1.85;
       text-align: justify;
       -webkit-text-size-adjust: none; text-size-adjust: none;
     }
+    .slot-left   .pbody { left: 5px;  right: 20px; }   /* spine side gets the gutter */
+    .slot-right  .pbody { right: 5px; left: 20px; }
+    .slot-center .pbody { left: 8px;  right: 8px; }
     .pbody p { margin: 0; }
 
     /* ── Cover ───────────────────────────────────── */
-    .page.cover .pbg {
-      background: linear-gradient(148deg, #1d3d63 0%, #0e2240 48%, #152f52 100%);
-    }
-    .page.cover .pbg::after {
+    .t-cover .pbg { background: linear-gradient(148deg, #1d3d63 0%, #0e2240 48%, #152f52 100%); }
+    .t-cover .pbg::after {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 340'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.45' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 .12 0 0 0 0 .26 0 0 0 0 .48 0 0 0 .28 0'/%3E%3C/filter%3E%3Crect width='240' height='340' filter='url(%23p)'/%3E%3C/svg%3E");
     }
-    .cvr-frame {
-      position: absolute; inset: 13px;
-      border: 1.5px solid rgba(201,168,76,.52); z-index: 2; pointer-events: none;
-    }
-    .cvr-frame::after {
-      content: ''; position: absolute; inset: 8px;
-      border: .5px solid rgba(201,168,76,.22);
-    }
+    .cvr-frame { position: absolute; inset: 11px; border: 1.5px solid rgba(201,168,76,.5); z-index: 2; pointer-events: none; }
+    .cvr-frame::after { content: ''; position: absolute; inset: 7px; border: .5px solid rgba(201,168,76,.22); }
     .cvr-sp {
-      position: absolute; top: 0; right: 0; width: 18px; height: 100%;
-      background: linear-gradient(to left,
-        rgba(8,18,32,.95) 0%, rgba(8,18,32,.4) 50%, transparent 100%);
-      z-index: 4; pointer-events: none;
+      position: absolute; top: 0; right: 0; width: 15px; height: 100%; z-index: 4; pointer-events: none;
+      background: linear-gradient(to left, rgba(8,18,32,.95) 0%, rgba(8,18,32,.4) 50%, transparent 100%);
     }
     .cvr-body {
       position: absolute; inset: 0; z-index: 3;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 10px; padding: 28px 22px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; padding: 24px 16px;
     }
-    .cvr-genre {
-      font-size: 9px; color: #c9a84c;
-      letter-spacing: .4em; opacity: .85; margin-bottom: 2px;
-    }
-    .cvr-titles { display: flex; gap: 14px; align-items: center; }
+    .cvr-genre { font-size: 8.5px; color: #c9a84c; letter-spacing: .35em; opacity: .85; }
+    .cvr-titles { display: flex; gap: 11px; align-items: center; }
     .cvr-title {
-      writing-mode: vertical-rl; font-size: 36px; font-weight: 700;
-      color: #f0e8d0; letter-spacing: .22em; line-height: 1.25;
+      writing-mode: vertical-rl; font-size: min(8.6vw, 33px); font-weight: 700;
+      color: #f0e8d0; letter-spacing: .2em; line-height: 1.25;
       text-shadow: 0 2px 14px rgba(0,0,0,.7), 0 0 40px rgba(201,168,76,.1);
     }
-    .cvr-sub {
-      writing-mode: vertical-rl; font-size: 12px;
-      color: #a8c0d8; letter-spacing: .18em; opacity: .85; line-height: 1.7;
-    }
-    .cvr-div {
-      width: 54px; height: 1px; margin: 2px 0;
-      background: linear-gradient(to right, transparent, rgba(201,168,76,.6), transparent);
-    }
-    .cvr-foot {
-      position: absolute; bottom: 26px; z-index: 3;
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-    }
-    .cvr-author { font-size: 11px; color: #b8c8d8; letter-spacing: .22em; }
-    .cvr-pub    { font-size: 9px; color: rgba(201,168,76,.65); letter-spacing: .32em; }
+    .cvr-sub { writing-mode: vertical-rl; font-size: 11px; color: #a8c0d8; letter-spacing: .16em; opacity: .85; line-height: 1.7; }
+    .cvr-div { width: 44px; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,.6), transparent); }
+    .cvr-foot { position: absolute; bottom: 22px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .cvr-author { font-size: 10.5px; color: #b8c8d8; letter-spacing: .2em; }
+    .cvr-pub { font-size: 8.5px; color: rgba(201,168,76,.65); letter-spacing: .3em; }
 
     /* ── Chapter title page ───────────────────────── */
-    .page.chp .pbody {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 16px;
-    }
-    .ch-num   { font-size: 10.5px; color: #7a6045; letter-spacing: .35em; }
-    .ch-rule  {
-      width: 1px; height: 28px;
-      background: linear-gradient(to bottom, transparent, #a0845a, transparent);
-    }
-    .ch-title { font-size: 22px; font-weight: 700; color: #281e12; letter-spacing: .15em; line-height: 1.4; }
+    .t-ch .pbody { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    .ch-num { font-size: 10px; color: #7a6045; letter-spacing: .3em; }
+    .ch-rule { width: 1px; height: 26px; background: linear-gradient(to bottom, transparent, #a0845a, transparent); }
+    .ch-title { font-size: min(5.6vw, 21px); font-weight: 700; color: #281e12; letter-spacing: .14em; line-height: 1.4; }
 
     /* ── Colophon ─────────────────────────────────── */
-    .page.col .pbody { padding: 14px 10px; }
-    .col-text { font-size: 11px; color: #8a7055; letter-spacing: .16em; line-height: 2.4; }
+    .t-col .pbody { display: flex; align-items: center; justify-content: center; }
+    .col-text { font-size: 10.5px; color: #8a7055; letter-spacing: .14em; line-height: 2.3; text-align: center; }
     .col-text p { margin: 0; }
 
-    /* ── Navigation ──────────────────────────────── */
-    #nav { display: flex; align-items: center; gap: 18px; }
+    /* ── Page-flip animations (centre-spine swing) ── */
+    @keyframes aoL { from { transform: rotateY(0);     opacity: 1; } to { transform: rotateY(-92deg); opacity: .08; } }
+    @keyframes aiL { from { transform: rotateY(92deg); opacity: .08; } to { transform: rotateY(0);    opacity: 1; } }
+    @keyframes aoR { from { transform: rotateY(0);      opacity: 1; } to { transform: rotateY(92deg); opacity: .08; } }
+    @keyframes aiR { from { transform: rotateY(-92deg); opacity: .08; } to { transform: rotateY(0);   opacity: 1; } }
+    @keyframes aoC { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.97); } }
+    @keyframes aiC { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+    .aoL { animation: aoL .3s ease-in  forwards; }
+    .aiL { animation: aiL .3s ease-out forwards; }
+    .aoR { animation: aoR .3s ease-in  forwards; }
+    .aiR { animation: aiR .3s ease-out forwards; }
+    .aoC { animation: aoC .24s ease forwards; }
+    .aiC { animation: aiC .24s ease forwards; }
+
+    /* ── Tap zones ───────────────────────────────── */
+    .tz { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: pointer; }
+    #tzl { left: 0; } #tzr { right: 0; }
+
+    /* ── Navigation (page move, within chapter) ──── */
+    #nav { display: flex; align-items: center; gap: 16px; }
     .nb {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.14);
-      color: rgba(255,255,255,.62); font-size: 17px; cursor: pointer;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.62); font-size: 16px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all .18s; touch-action: manipulation;
     }
     .nb:hover:not(:disabled) { background: rgba(255,255,255,.15); color: rgba(255,255,255,.92); }
     .nb:active:not(:disabled) { transform: scale(.9); }
     .nb:disabled { opacity: .18; cursor: default; }
+    #dots { display: flex; gap: 5px; align-items: center; max-width: 50vw; flex-wrap: wrap; justify-content: center; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.2); transition: all .3s; flex-shrink: 0; }
+    .dot.on { background: rgba(255,255,255,.65); width: 15px; border-radius: 3px; }
 
-    #dots { display: flex; gap: 5px; align-items: center; }
-    .dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: rgba(255,255,255,.2);
-      transition: all .3s ease; flex-shrink: 0;
+    /* ── Chapter jump buttons ────────────────────── */
+    #jump { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 92vw; }
+    .jb {
+      font: inherit; font-size: 10.5px; padding: 5px 11px; border-radius: 14px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.58); cursor: pointer; letter-spacing: .06em;
+      transition: all .18s; touch-action: manipulation;
     }
-    .dot.on { background: rgba(255,255,255,.65); width: 16px; border-radius: 3px; }
-
-    /* ── Tap zones ───────────────────────────────── */
-    .tz { position: absolute; top: 0; bottom: 0; width: 42%; z-index: 10; cursor: pointer; }
-    #tzl { left: 0; }
-    #tzr { right: 0; }
+    .jb:hover { background: rgba(255,255,255,.14); color: #fff; }
+    .jb.on { background: rgba(201,168,76,.22); border-color: rgba(201,168,76,.5); color: #e8d49a; }
 
     /* ── Swipe hint ──────────────────────────────── */
     #hint {
-      position: absolute; inset: 0; z-index: 20; pointer-events: none;
-      display: flex; align-items: center; justify-content: flex-end; padding-right: 14%;
-      animation: hintfade 3.2s ease forwards;
+      position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%);
+      font-size: 9.5px; color: rgba(255,255,255,.45); letter-spacing: .12em;
+      white-space: nowrap; pointer-events: none;
+      animation: hintfade 4s ease forwards;
     }
-    @keyframes hintfade { 0%{opacity:0} 20%{opacity:1} 72%{opacity:1} 100%{opacity:0} }
-    .hint-ico {
-      color: rgba(255,255,255,.52);
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      font-size: 9px; letter-spacing: .1em;
-    }
-    .hint-ico svg { animation: hintbounce .65s ease-in-out infinite alternate; }
-    @keyframes hintbounce { from{transform:translateX(0)} to{transform:translateX(7px)} }
-
-    /* ── Page-flip animations ────────────────────── */
-    /* Forward (open to the right): right side swings toward viewer */
-    @keyframes fo {
-      from { transform: rotateY(0deg); opacity: 1; }
-      to   { transform: rotateY(72deg); opacity: .15; }
-    }
-    @keyframes fi {
-      from { transform: rotateY(-72deg); opacity: .15; }
-      to   { transform: rotateY(0deg); opacity: 1; }
-    }
-    /* Backward */
-    @keyframes bo {
-      from { transform: rotateY(0deg); opacity: 1; }
-      to   { transform: rotateY(-72deg); opacity: .15; }
-    }
-    @keyframes bi {
-      from { transform: rotateY(72deg); opacity: .15; }
-      to   { transform: rotateY(0deg); opacity: 1; }
-    }
-
-    .fo { animation: fo .26s ease-in  forwards; }
-    .fi { animation: fi .26s ease-out forwards; }
-    .bo { animation: bo .26s ease-in  forwards; }
-    .bi { animation: bi .26s ease-out forwards; }
-
-    @media (max-height: 680px) {
-      .page { --w: min(85vw, 300px); }
-      .pbody { font-size: 12.5px; }
-      .cvr-title { font-size: 30px; }
-    }
-    @media (min-height: 900px) {
-      .page { --w: min(88vw, 380px); }
-      .pbody { font-size: 14px; }
-    }
+    @keyframes hintfade { 0%{opacity:0} 18%{opacity:1} 75%{opacity:1} 100%{opacity:0} }
   </style>
 </head>
 <body>
@@ -273,48 +224,32 @@
     <div id="pg" class="page"></div>
     <div class="tz" id="tzl"></div>
     <div class="tz" id="tzr"></div>
-    <div id="hint">
-      <div class="hint-ico">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.5"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18l6-6-6-6"/>
-        </svg>
-        <span>次へ</span>
-      </div>
-    </div>
+    <div id="hint">タップ／スワイプでめくる</div>
   </div>
   <div id="nav">
     <button class="nb" id="bnp" onclick="go(-1)" aria-label="前のページ">‹</button>
     <div id="dots"></div>
-    <button class="nb" id="bnn" onclick="go(1)"  aria-label="次のページ">›</button>
+    <button class="nb" id="bnn" onclick="go(1)" aria-label="次のページ">›</button>
   </div>
+  <div id="jump"></div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════
-//  Story data
+//  Book data
 // ═══════════════════════════════════════════════
-const PAGES = [
+const BOOK = {
+  title: '告白の練習', author: '桜庭零一',
+  genre: 'コメディ恋愛', sub: 'ちょっぴり<br>不器用な<br>恋の話', pub: 'AI文庫',
+};
 
-  { t: 'cover' },
-
-  // ──── 第一章 ────────────────────────────────
+const CHAPTERS = [
   {
-    t: 'ch', ch: '第一章', ti: '運命のベンチ',
-    lb: '第一章　運命のベンチ', pn: 1,
-  },
-  {
-    t: 'tx', lb: '第一章　運命のベンチ', pn: 2,
-    ps: [
+    num: '第一章', ti: '運命のベンチ',
+    paras: [
       '　桜田太郎、二十四歳。職業はプログラマー。趣味は読書と……告白の失敗。',
       '　もちろん、後者は趣味ではなく実績だ。大学時代に三回、社会人になってからも二回。合計五回の告白、全て華麗に散った歴史を持つ男である。',
       '　今回の相手は、同じ職場の山田花子、二十三歳。明るく天真爛漫な新入社員で──あろうことか──太郎の書いたコードに「すごいですね！」と本気で感動してくれた、唯一の人類だった。',
-    ],
-  },
-  {
-    t: 'tx', lb: '第一章　運命のベンチ', pn: 3,
-    ps: [
       '　「好きです」',
       '　太郎は部屋の鏡に向かってつぶやいた。しかし声は震え、視線は泳ぎ、全体的にどう見ても「具合が悪い人」にしか見えなかった。',
       '　「だめだ……」',
@@ -322,26 +257,15 @@ const PAGES = [
       '　翌日の昼休み、太郎は近くの公園へ足を向けた。',
     ],
   },
-
-  // ──── 第二章 ────────────────────────────────
   {
-    t: 'ch', ch: '第二章', ti: 'まさかの展開',
-    lb: '第二章　まさかの展開', pn: 4,
-  },
-  {
-    t: 'tx', lb: '第二章　まさかの展開', pn: 5,
-    ps: [
+    num: '第二章', ti: 'まさかの展開',
+    paras: [
       '　公園のベンチに、白髪のおじいさんが一人座っていた。年齢は七十代後半か。穏やかな顔で鳩に餌をやっている。',
       '　太郎は思い切って声をかけた。',
       '　「あの、すみません。告白の練習に付き合っていただけませんか？」',
       '　おじいさんは鳩から顔を上げ、太郎をじっと見た。そして五秒後──にこっと笑った。',
       '　「ええよ。わしも暇じゃからな」',
       '　関西弁のおじいさんは、予想外の快諾をしてくれた。',
-    ],
-  },
-  {
-    t: 'tx', lb: '第二章　まさかの展開', pn: 6,
-    ps: [
       '　「あの……ずっと前から気になっていました。あなたのことが……好きです！」',
       '　「あら、うれしいわあ」',
       '　おじいさんは両手を頬に当て、乙女のような返事をした。太郎は頭を抱えたが、練習を続けた。おじいさんのアドバイスは意外にも的確だった。「目を見んと」「声が小さい」「笑顔で言いなさい」。',
@@ -350,184 +274,270 @@ const PAGES = [
       '　その声は、おじいさんのものではなかった。',
     ],
   },
-
-  // ──── 第三章 ────────────────────────────────
   {
-    t: 'ch', ch: '第三章', ti: 'ハッピーエンド？',
-    lb: '第三章　ハッピーエンド？', pn: 7,
-  },
-  {
-    t: 'tx', lb: '第三章　ハッピーエンド？', pn: 8,
-    ps: [
+    num: '第三章', ti: 'ハッピーエンド？',
+    paras: [
       '　振り返ると、そこに立っていたのは──山田花子だった。コンビニ袋を提げたまま、目を丸くして固まっている。',
       '　「ち、ちがうんです！　これは練習で！」',
       '　おじいさんが「そうや、わしが付き合ったんやで」と笑顔で証言してくれ、ようやく花子は事情を理解した。',
       '　「……その告白の相手って」花子が上目遣いで訊く。「もしかして、わたし？」',
-      '　太郎は耳まで真っ赤になった。',
-    ],
-  },
-  {
-    t: 'tx', lb: '第三章　ハッピーエンド？', pn: 9,
-    ps: [
-      '　太郎は深呼吸をした。練習の成果を発揮する時だ。',
+      '　太郎は耳まで真っ赤になった。深呼吸をする。練習の成果を発揮する時だ。',
       '　「山田花子さん。俺、ずっとあなたのことが好きでした。付き合ってください」',
       '　花子は三秒間、じっと太郎を見つめた。それから──ぷっと吹き出した。',
       '　「へたくそな告白。でも、すごく太郎くんらしくて、好きです」',
       '　おじいさんが満足そうにベンチを立ち、去り際に一言。',
       '　「花子のじいちゃんより、よろしゅうな」',
       '　太郎はその場でしばらく固まっていた。',
-      '　　　　　　── 了 ──',
+      '　　　　── 了 ──',
     ],
   },
-
-  { t: 'col' },
-
 ];
 
 // ═══════════════════════════════════════════════
-//  State
+//  Element refs & state
 // ═══════════════════════════════════════════════
-let cur = 0, busy = false;
+const pw = document.getElementById('pw');
+const pg = document.getElementById('pg');
+const dotsEl = document.getElementById('dots');
+const jumpEl = document.getElementById('jump');
+const bnp = document.getElementById('bnp');
+const bnn = document.getElementById('bnn');
+
+let PAGES = [];      // {t, slot, pn, lb, ...}
+let SECTIONS = [];   // {label, start, end}
+let cur = 0, busy = false, booted = false;
 
 // ═══════════════════════════════════════════════
-//  Render
+//  Auto-pagination: split chapter paragraphs to fit a page
+// ═══════════════════════════════════════════════
+function paginate(paras, mb) {
+  const out = [];
+  let buf = [];
+  const setb = a => { mb.innerHTML = a.map(x => `<p>${x}</p>`).join(''); };
+  const fits = () => mb.scrollWidth <= mb.clientWidth + 1;
+
+  for (const para of paras) {
+    buf.push(para); setb(buf);
+    if (fits()) continue;          // whole paragraph still fits → keep going
+    buf.pop();
+    if (buf.length) { out.push(buf); buf = []; }   // close current page
+
+    // place this paragraph alone, splitting by characters if needed
+    let rem = para;
+    while (rem.length) {
+      setb([rem]);
+      if (fits()) { buf = [rem]; break; }          // fits alone → start new buffer
+      let lo = 1, hi = rem.length, best = 1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        setb([rem.slice(0, mid)]);
+        if (fits()) { best = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      out.push([rem.slice(0, best)]);
+      rem = rem.slice(best);
+    }
+  }
+  if (buf.length) out.push(buf);
+  return out;
+}
+
+// ═══════════════════════════════════════════════
+//  Build the page list (cover → chapters → colophon)
+// ═══════════════════════════════════════════════
+function build() {
+  // hidden measuring page (same metrics as a real text page)
+  const mp = document.createElement('div');
+  mp.className = 'page slot-left t-tx';
+  mp.style.cssText = 'visibility:hidden;pointer-events:none;';
+  mp.innerHTML = '<div class="pbg"></div><div class="psp"></div><div class="pedge"></div>' +
+    '<div class="phdr"><span class="phdr-ch">x</span><span class="phdr-bk">x</span></div>' +
+    '<div class="pbody"></div><div class="pftr"><span class="pnum">0</span></div>';
+  pw.appendChild(mp);
+  const mb = mp.querySelector('.pbody');
+
+  PAGES = []; SECTIONS = [];
+  let pn = 0;
+
+  PAGES.push({ t: 'cover', slot: 'center' });
+  SECTIONS.push({ label: '表紙', start: 0, end: 0 });
+
+  for (const ch of CHAPTERS) {
+    const start = PAGES.length;
+    const lb = `${ch.num}　${ch.ti}`;
+    pn++; PAGES.push({ t: 'ch', ch: ch.num, ti: ch.ti, lb, pn });
+    for (const ps of paginate(ch.paras, mb)) {
+      pn++; PAGES.push({ t: 'tx', ps, lb, pn });
+    }
+    SECTIONS.push({ label: ch.num, start, end: PAGES.length - 1 });
+  }
+
+  const ci = PAGES.length;
+  PAGES.push({ t: 'col', slot: 'center' });
+  SECTIONS.push({ label: '奥付', start: ci, end: ci });
+
+  pw.removeChild(mp);
+
+  // assign left/right slots — alternate within each chapter (starts on left)
+  for (const s of SECTIONS)
+    for (let i = s.start; i <= s.end; i++)
+      if (!PAGES[i].slot) PAGES[i].slot = ((i - s.start) % 2 === 0) ? 'left' : 'right';
+}
+
+// ═══════════════════════════════════════════════
+//  Render one page into the element
 // ═══════════════════════════════════════════════
 function render(el, i) {
   const d = PAGES[i];
-  el.className = 'page';
+  el.className = `page slot-${d.slot} t-${d.t}`;
 
   if (d.t === 'cover') {
-    el.classList.add('cover');
     el.innerHTML = `
-      <div class="pbg"></div>
-      <div class="cvr-sp"></div>
-      <div class="cvr-frame"></div>
+      <div class="pbg"></div><div class="cvr-sp"></div><div class="cvr-frame"></div>
       <div class="cvr-body">
-        <div class="cvr-genre">コメディ恋愛</div>
+        <div class="cvr-genre">${BOOK.genre}</div>
         <div class="cvr-titles">
-          <div class="cvr-title">告白の練習</div>
-          <div class="cvr-sub">ちょっぴり<br>不器用な<br>恋の話</div>
+          <div class="cvr-title">${BOOK.title}</div>
+          <div class="cvr-sub">${BOOK.sub}</div>
         </div>
         <div class="cvr-div"></div>
       </div>
       <div class="cvr-foot">
-        <div class="cvr-author">著　桜庭零一</div>
-        <div class="cvr-pub">AI文庫</div>
+        <div class="cvr-author">著　${BOOK.author}</div>
+        <div class="cvr-pub">${BOOK.pub}</div>
       </div>`;
 
   } else if (d.t === 'ch') {
-    el.classList.add('chp');
     el.innerHTML = `
       <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
-      <div class="phdr">
-        <span class="phdr-ch">${d.lb}</span>
-        <span class="phdr-bk">告白の練習</span>
-      </div>
+      <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
       <div class="pbody">
-        <span class="ch-num">${d.ch}</span>
-        <div class="ch-rule"></div>
-        <span class="ch-title">${d.ti}</span>
+        <span class="ch-num">${d.ch}</span><div class="ch-rule"></div><span class="ch-title">${d.ti}</span>
       </div>
       <div class="pftr"><span class="pnum">${d.pn}</span></div>`;
 
   } else if (d.t === 'tx') {
     el.innerHTML = `
       <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
-      <div class="phdr">
-        <span class="phdr-ch">${d.lb}</span>
-        <span class="phdr-bk">告白の練習</span>
-      </div>
+      <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
       <div class="pbody">${d.ps.map(p => `<p>${p}</p>`).join('')}</div>
       <div class="pftr"><span class="pnum">${d.pn}</span></div>`;
 
   } else {
-    /* colophon */
-    el.classList.add('col');
     const y = new Date().getFullYear();
     el.innerHTML = `
       <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
-      <div class="phdr">
-        <span class="phdr-ch">奥付</span>
-        <span class="phdr-bk">告白の練習</span>
-      </div>
-      <div class="pbody">
-        <div class="col-text">
-          <p>告白の練習</p>
-          <p>${y}年　初版発行</p>
-          <p>著者　桜庭零一</p>
-          <p>発行所　AI文庫</p>
-        </div>
-      </div>
+      <div class="phdr"><span class="phdr-ch">奥付</span><span class="phdr-bk">${BOOK.title}</span></div>
+      <div class="pbody"><div class="col-text">
+        <p>${BOOK.title}</p><p>${y}年　初版発行</p><p>著者　${BOOK.author}</p><p>発行所　${BOOK.pub}</p>
+      </div></div>
       <div class="pftr"><span class="pnum">―</span></div>`;
   }
 }
 
 // ═══════════════════════════════════════════════
-//  Navigation
+//  Navigation helpers
 // ═══════════════════════════════════════════════
+const sectionOf = i => SECTIONS.find(s => i >= s.start && i <= s.end);
+const isEnd = s => s.label === '表紙' || s.label === '奥付';   // single-page caps
+
 function ui() {
-  document.getElementById('bnp').disabled = cur === 0;
-  document.getElementById('bnn').disabled = cur === PAGES.length - 1;
-  document.getElementById('dots').innerHTML =
-    PAGES.map((_, i) => `<div class="dot${i === cur ? ' on' : ''}"></div>`).join('');
+  const sec = sectionOf(cur);
+  bnp.disabled = !(cur > sec.start || (isEnd(sec) && cur > 0));
+  bnn.disabled = !(cur < sec.end   || (isEnd(sec) && cur < PAGES.length - 1));
+
+  // dots reflect pages within the current chapter
+  let dh = '';
+  for (let i = sec.start; i <= sec.end; i++) dh += `<div class="dot${i === cur ? ' on' : ''}"></div>`;
+  dotsEl.innerHTML = dh;
+
+  [...jumpEl.children].forEach((b, si) => b.classList.toggle('on', SECTIONS[si] === sec));
 }
 
+const outMap = { left: 'aoL', right: 'aoR', center: 'aoC' };
+const inMap  = { left: 'aiL', right: 'aiR', center: 'aiC' };
+
+function navigate(target, dir) {
+  if (busy || target === cur) return;
+  busy = true;
+  const oc = outMap[PAGES[cur].slot];
+  pg.classList.add(oc);
+  setTimeout(() => {
+    cur = target;
+    render(pg, cur);
+    const ic = inMap[PAGES[cur].slot];
+    pg.classList.add(ic);
+    ui();
+    setTimeout(() => { pg.classList.remove(ic); busy = false; }, 300);
+  }, 240);
+}
+
+// page move — stays inside the current chapter (caps may cross to neighbour)
 function go(dir) {
   if (busy) return;
+  const sec = sectionOf(cur);
   const n = cur + dir;
-  if (n < 0 || n >= PAGES.length) return;
-  busy = true;
+  if (n >= sec.start && n <= sec.end) { navigate(n, dir); return; }
+  if (isEnd(sec) && n >= 0 && n < PAGES.length) navigate(n, dir);
+}
 
-  const el = document.getElementById('pg');
-  const oc = dir > 0 ? 'fo' : 'bo';
-  const ic = dir > 0 ? 'fi' : 'bi';
+// chapter jump
+function jump(si) {
+  if (busy) return;
+  const t = SECTIONS[si].start;
+  if (t !== cur) navigate(t, t > cur ? 1 : -1);
+}
+window.jump = jump;
 
-  el.classList.add(oc);
-  setTimeout(() => {
-    cur = n;
-    render(el, cur);
-    el.classList.remove(oc);
-    el.classList.add(ic);
-    ui();
-    setTimeout(() => { el.classList.remove(ic); busy = false; }, 260);
-  }, 260);
+function buildJump() {
+  jumpEl.innerHTML = SECTIONS.map((s, si) => `<button class="jb" onclick="jump(${si})">${s.label}</button>`).join('');
 }
 
 // ═══════════════════════════════════════════════
-//  Tap zones: left = next, right = prev  (日本語書籍方向)
+//  Input: tap zones / swipe / keyboard
 // ═══════════════════════════════════════════════
-document.getElementById('tzl').addEventListener('click', () => go(1));
-document.getElementById('tzr').addEventListener('click', () => go(-1));
+document.getElementById('tzl').addEventListener('click', () => go(-1));
+document.getElementById('tzr').addEventListener('click', () => go(1));
 
-// ═══════════════════════════════════════════════
-//  Swipe: right = next, left = prev  (日本語書籍方向)
-// ═══════════════════════════════════════════════
 let sx = 0, sy = 0;
-const pw = document.getElementById('pw');
-pw.addEventListener('touchstart', e => {
-  sx = e.touches[0].clientX;
-  sy = e.touches[0].clientY;
-}, { passive: true });
+pw.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
 pw.addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - sx;
-  const dy = e.changedTouches[0].clientY - sy;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx > 0 ? 1 : -1);
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx < 0 ? 1 : -1);
 }, { passive: true });
 
-// ═══════════════════════════════════════════════
-//  Keyboard
-// ═══════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
 });
 
 // ═══════════════════════════════════════════════
-//  Init
+//  Boot (after web fonts so pagination measures correctly)
 // ═══════════════════════════════════════════════
-render(document.getElementById('pg'), 0);
-ui();
-setTimeout(() => { const h = document.getElementById('hint'); if (h) h.remove(); }, 3300);
+function boot() {
+  if (booted) return; booted = true;
+  build(); buildJump();
+  cur = 0; render(pg, 0); ui();
+}
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(boot);
+  setTimeout(boot, 1500);   // fallback
+} else {
+  boot();
+}
+
+// re-paginate on resize / rotation, keep the reader on the current chapter
+let rz;
+window.addEventListener('resize', () => {
+  if (!booted) return;
+  clearTimeout(rz);
+  rz = setTimeout(() => {
+    const si = SECTIONS.indexOf(sectionOf(cur));
+    build(); buildJump();
+    cur = SECTIONS[Math.min(si, SECTIONS.length - 1)].start;
+    render(pg, cur); ui();
+  }, 250);
+});
 </script>
 </body>
 </html>
