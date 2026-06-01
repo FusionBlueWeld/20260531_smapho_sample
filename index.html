@@ -14,8 +14,8 @@
     }
     html, body { height: 100%; overflow: hidden; }
     body {
-      --w: min(46vw, 320px);
-      --h: calc(var(--w) * 1.46);
+      --w: min(88vw, 420px);
+      --h: min(calc(var(--w) * 1.52), calc(100dvh - 130px));
       font-family: 'Noto Serif JP','Yu Mincho','游明朝','Hiragino Mincho ProN',
                    'Hiragino Mincho Pro',serif;
       display: flex; flex-direction: column;
@@ -32,8 +32,6 @@
           #2a1208 0%, #120805 65%, #090402 100%);
       user-select: none; -webkit-user-select: none;
     }
-    @media (min-height: 760px) { body { --w: min(48vw, 340px); } }
-    @media (max-height: 620px) { body { --w: min(42vw, 260px); } }
 
     /* ── Book scene ──────────────────────────────── */
     #scene {
@@ -41,28 +39,25 @@
       align-items: center; gap: 14px;
     }
 
-    /* spread wrapper (two page slots, spine at the centre) */
+    /* single-page wrapper */
     #pw {
       position: relative;
-      width: calc(var(--w) * 2);
+      width: var(--w);
       height: var(--h);
-      perspective: 1600px;
-      perspective-origin: 50% 50%;
+      overflow: hidden;
     }
 
     /* ── The Page ────────────────────────────────── */
     .page {
-      position: absolute; top: 0;
+      position: absolute; top: 0; left: 0;
       width: var(--w); height: var(--h);
       overflow: hidden;
-      will-change: transform, opacity;
-      backface-visibility: hidden;
+      will-change: transform;
       box-shadow: 0 9px 26px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.25);
     }
-    /* slot positions + pivot (spine = centre line) */
-    .page.slot-left   { left: 0;                  transform-origin: 100% 50%; border-radius: 6px 2px 2px 6px; }
-    .page.slot-right  { left: var(--w);           transform-origin: 0% 50%;   border-radius: 2px 6px 6px 2px; }
-    .page.slot-center { left: calc(var(--w) / 2); transform-origin: 50% 50%;  border-radius: 5px; }
+    .page.slot-left   { border-radius: 6px 2px 2px 6px; }
+    .page.slot-right  { border-radius: 2px 6px 6px 2px; }
+    .page.slot-center { border-radius: 5px; }
 
     /* ── Paper base ──────────────────────────────── */
     .pbg {
@@ -80,7 +75,7 @@
       background-size: cover; mix-blend-mode: multiply; pointer-events: none;
     }
 
-    /* spine + outer edge shadows (sides depend on the slot) */
+    /* spine + outer edge shadows */
     .psp { position: absolute; top: 0; width: 20px; height: 100%; z-index: 5; pointer-events: none; }
     .pedge { position: absolute; top: 0; width: 3px; height: 100%; z-index: 5; pointer-events: none; background: rgba(0,0,0,.08); }
     .slot-left  .psp  { right: 0; background: linear-gradient(to left,  rgba(0,0,0,.30), rgba(0,0,0,.05) 60%, transparent); }
@@ -90,36 +85,36 @@
 
     /* ── Header ──────────────────────────────────── */
     .phdr {
-      position: absolute; top: 0; left: 0; right: 0; height: 30px;
-      display: flex; align-items: center; padding: 0 15px;
+      position: absolute; top: 0; left: 0; right: 0; height: 32px;
+      display: flex; align-items: center; padding: 0 18px;
       border-bottom: 1px solid rgba(110,80,45,.18); z-index: 3;
     }
-    .phdr-ch { font-size: 10px; color: #7a6045; letter-spacing: .12em; }
-    .phdr-bk { margin-left: auto; font-size: 9px; color: #9a7a55; letter-spacing: .08em; opacity: .7; }
+    .phdr-ch { font-size: 11px; color: #7a6045; letter-spacing: .12em; }
+    .phdr-bk { margin-left: auto; font-size: 10px; color: #9a7a55; letter-spacing: .08em; opacity: .7; }
 
     /* ── Footer ──────────────────────────────────── */
     .pftr {
-      position: absolute; bottom: 0; left: 0; right: 0; height: 26px;
-      display: flex; align-items: center; padding: 0 15px;
+      position: absolute; bottom: 0; left: 0; right: 0; height: 28px;
+      display: flex; align-items: center; padding: 0 18px;
       border-top: 1px solid rgba(110,80,45,.14); z-index: 3;
     }
-    .pnum { font-size: 11px; color: #8a6840; letter-spacing: .06em; }
-    .slot-left  .pnum { margin-right: auto; }   /* page number on outer edge */
+    .pnum { font-size: 12px; color: #8a6840; letter-spacing: .06em; }
+    .slot-left  .pnum { margin-right: auto; }
     .slot-right .pnum { margin-left: auto; }
     .slot-center .pnum { margin: 0 auto; }
 
     /* ── Body text (vertical 縦書き) ──────────────── */
     .pbody {
-      position: absolute; top: 30px; bottom: 26px;
+      position: absolute; top: 32px; bottom: 28px;
       writing-mode: vertical-rl; text-orientation: upright;
-      overflow: hidden; padding: 8px 4px;
-      color: #281e12; font-size: min(3.7vw, 14px); line-height: 1.85;
+      overflow: hidden; padding: 12px 8px;
+      color: #281e12; font-size: min(4.6vw, 17px); line-height: 1.85;
       text-align: justify;
       -webkit-text-size-adjust: none; text-size-adjust: none;
     }
-    .slot-left   .pbody { left: 5px;  right: 20px; }   /* spine side gets the gutter */
-    .slot-right  .pbody { right: 5px; left: 20px; }
-    .slot-center .pbody { left: 8px;  right: 8px; }
+    .slot-left   .pbody { left: 8px;  right: 24px; }
+    .slot-right  .pbody { right: 8px; left: 24px; }
+    .slot-center .pbody { left: 12px; right: 12px; }
     .pbody p { margin: 0; }
 
     /* ── Cover ───────────────────────────────────── */
@@ -127,8 +122,8 @@
     .t-cover .pbg::after {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 340'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.45' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 .12 0 0 0 0 .26 0 0 0 0 .48 0 0 0 .28 0'/%3E%3C/filter%3E%3Crect width='240' height='340' filter='url(%23p)'/%3E%3C/svg%3E");
     }
-    .cvr-frame { position: absolute; inset: 11px; border: 1.5px solid rgba(201,168,76,.5); z-index: 2; pointer-events: none; }
-    .cvr-frame::after { content: ''; position: absolute; inset: 7px; border: .5px solid rgba(201,168,76,.22); }
+    .cvr-frame { position: absolute; inset: 14px; border: 1.5px solid rgba(201,168,76,.5); z-index: 2; pointer-events: none; }
+    .cvr-frame::after { content: ''; position: absolute; inset: 8px; border: .5px solid rgba(201,168,76,.22); }
     .cvr-sp {
       position: absolute; top: 0; right: 0; width: 15px; height: 100%; z-index: 4; pointer-events: none;
       background: linear-gradient(to left, rgba(8,18,32,.95) 0%, rgba(8,18,32,.4) 50%, transparent 100%);
@@ -136,51 +131,47 @@
     .cvr-body {
       position: absolute; inset: 0; z-index: 3;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 8px; padding: 24px 16px;
+      gap: 10px; padding: 28px 20px;
     }
-    .cvr-genre { font-size: 8.5px; color: #c9a84c; letter-spacing: .35em; opacity: .85; }
-    .cvr-titles { display: flex; gap: 11px; align-items: center; }
+    .cvr-genre { font-size: min(2.8vw, 11px); color: #c9a84c; letter-spacing: .35em; opacity: .85; }
+    .cvr-titles { display: flex; gap: 16px; align-items: center; }
     .cvr-title {
-      writing-mode: vertical-rl; font-size: min(8.6vw, 33px); font-weight: 700;
+      writing-mode: vertical-rl; font-size: min(13.5vw, 54px); font-weight: 700;
       color: #f0e8d0; letter-spacing: .2em; line-height: 1.25;
       text-shadow: 0 2px 14px rgba(0,0,0,.7), 0 0 40px rgba(201,168,76,.1);
     }
-    .cvr-sub { writing-mode: vertical-rl; font-size: 11px; color: #a8c0d8; letter-spacing: .16em; opacity: .85; line-height: 1.7; }
-    .cvr-div { width: 44px; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,.6), transparent); }
-    .cvr-foot { position: absolute; bottom: 22px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .cvr-author { font-size: 10.5px; color: #b8c8d8; letter-spacing: .2em; }
-    .cvr-pub { font-size: 8.5px; color: rgba(201,168,76,.65); letter-spacing: .3em; }
+    .cvr-sub { writing-mode: vertical-rl; font-size: min(3.8vw, 15px); color: #a8c0d8; letter-spacing: .16em; opacity: .85; line-height: 1.7; }
+    .cvr-div { width: 52px; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,.6), transparent); }
+    .cvr-foot { position: absolute; bottom: 26px; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .cvr-author { font-size: min(3.5vw, 13px); color: #b8c8d8; letter-spacing: .2em; }
+    .cvr-pub { font-size: min(2.8vw, 11px); color: rgba(201,168,76,.65); letter-spacing: .3em; }
 
     /* ── Chapter title page ───────────────────────── */
-    .t-ch .pbody { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-    .ch-num { font-size: 10px; color: #7a6045; letter-spacing: .3em; }
-    .ch-rule { width: 1px; height: 26px; background: linear-gradient(to bottom, transparent, #a0845a, transparent); }
-    .ch-title { font-size: min(5.6vw, 21px); font-weight: 700; color: #281e12; letter-spacing: .14em; line-height: 1.4; }
+    .t-ch .pbody { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+    .ch-num { font-size: min(3vw, 12px); color: #7a6045; letter-spacing: .3em; }
+    .ch-rule { width: 1px; height: 30px; background: linear-gradient(to bottom, transparent, #a0845a, transparent); }
+    .ch-title { font-size: min(7.5vw, 28px); font-weight: 700; color: #281e12; letter-spacing: .14em; line-height: 1.4; }
 
     /* ── Colophon ─────────────────────────────────── */
     .t-col .pbody { display: flex; align-items: center; justify-content: center; }
-    .col-text { font-size: 10.5px; color: #8a7055; letter-spacing: .14em; line-height: 2.3; text-align: center; }
+    .col-text { font-size: min(3.2vw, 12px); color: #8a7055; letter-spacing: .14em; line-height: 2.3; text-align: center; }
     .col-text p { margin: 0; }
 
-    /* ── Page-flip animations (centre-spine swing) ── */
-    @keyframes aoL { from { transform: rotateY(0);     opacity: 1; } to { transform: rotateY(-92deg); opacity: .08; } }
-    @keyframes aiL { from { transform: rotateY(92deg); opacity: .08; } to { transform: rotateY(0);    opacity: 1; } }
-    @keyframes aoR { from { transform: rotateY(0);      opacity: 1; } to { transform: rotateY(92deg); opacity: .08; } }
-    @keyframes aiR { from { transform: rotateY(-92deg); opacity: .08; } to { transform: rotateY(0);   opacity: 1; } }
-    @keyframes aoC { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.97); } }
-    @keyframes aiC { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
-    .aoL { animation: aoL .3s ease-in  forwards; }
-    .aiL { animation: aiL .3s ease-out forwards; }
-    .aoR { animation: aoR .3s ease-in  forwards; }
-    .aiR { animation: aiR .3s ease-out forwards; }
-    .aoC { animation: aoC .24s ease forwards; }
-    .aiC { animation: aiC .24s ease forwards; }
+    /* ── Slide animations ────────────────────────── */
+    @keyframes slideOutRight { from { transform: translateX(0); } to { transform: translateX(106%); } }
+    @keyframes slideInLeft   { from { transform: translateX(-106%); } to { transform: translateX(0); } }
+    @keyframes slideOutLeft  { from { transform: translateX(0); } to { transform: translateX(-106%); } }
+    @keyframes slideInRight  { from { transform: translateX(106%); } to { transform: translateX(0); } }
+    .slideOutRight { animation: slideOutRight .32s ease-in  forwards; }
+    .slideInLeft   { animation: slideInLeft   .32s ease-out forwards; }
+    .slideOutLeft  { animation: slideOutLeft  .32s ease-in  forwards; }
+    .slideInRight  { animation: slideInRight  .32s ease-out forwards; }
 
     /* ── Tap zones ───────────────────────────────── */
     .tz { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: pointer; }
     #tzl { left: 0; } #tzr { right: 0; }
 
-    /* ── Navigation (page move, within chapter) ──── */
+    /* ── Navigation ─────────────────────────────── */
     #nav { display: flex; align-items: center; gap: 16px; }
     .nb {
       width: 38px; height: 38px; border-radius: 50%;
@@ -221,7 +212,8 @@
 
 <div id="scene">
   <div id="pw">
-    <div id="pg" class="page"></div>
+    <div id="pg2" class="page" style="display:none"></div>
+    <div id="pg"  class="page"></div>
     <div class="tz" id="tzl"></div>
     <div class="tz" id="tzr"></div>
     <div id="hint">タップ／スワイプでめくる</div>
@@ -296,15 +288,16 @@ const CHAPTERS = [
 // ═══════════════════════════════════════════════
 //  Element refs & state
 // ═══════════════════════════════════════════════
-const pw = document.getElementById('pw');
-const pg = document.getElementById('pg');
-const dotsEl = document.getElementById('dots');
-const jumpEl = document.getElementById('jump');
-const bnp = document.getElementById('bnp');
-const bnn = document.getElementById('bnn');
+const pw      = document.getElementById('pw');
+let   pg      = document.getElementById('pg');
+let   pg2     = document.getElementById('pg2');
+const dotsEl  = document.getElementById('dots');
+const jumpEl  = document.getElementById('jump');
+const bnp     = document.getElementById('bnp');
+const bnn     = document.getElementById('bnn');
 
-let PAGES = [];      // {t, slot, pn, lb, ...}
-let SECTIONS = [];   // {label, start, end}
+let PAGES = [];
+let SECTIONS = [];
 let cur = 0, busy = false, booted = false;
 
 // ═══════════════════════════════════════════════
@@ -318,15 +311,14 @@ function paginate(paras, mb) {
 
   for (const para of paras) {
     buf.push(para); setb(buf);
-    if (fits()) continue;          // whole paragraph still fits → keep going
+    if (fits()) continue;
     buf.pop();
-    if (buf.length) { out.push(buf); buf = []; }   // close current page
+    if (buf.length) { out.push(buf); buf = []; }
 
-    // place this paragraph alone, splitting by characters if needed
     let rem = para;
     while (rem.length) {
       setb([rem]);
-      if (fits()) { buf = [rem]; break; }          // fits alone → start new buffer
+      if (fits()) { buf = [rem]; break; }
       let lo = 1, hi = rem.length, best = 1;
       while (lo <= hi) {
         const mid = (lo + hi) >> 1;
@@ -342,10 +334,9 @@ function paginate(paras, mb) {
 }
 
 // ═══════════════════════════════════════════════
-//  Build the page list (cover → chapters → colophon)
+//  Build the page list
 // ═══════════════════════════════════════════════
 function build() {
-  // hidden measuring page (same metrics as a real text page)
   const mp = document.createElement('div');
   mp.className = 'page slot-left t-tx';
   mp.style.cssText = 'visibility:hidden;pointer-events:none;';
@@ -377,14 +368,13 @@ function build() {
 
   pw.removeChild(mp);
 
-  // assign left/right slots — alternate within each chapter (starts on left)
   for (const s of SECTIONS)
     for (let i = s.start; i <= s.end; i++)
       if (!PAGES[i].slot) PAGES[i].slot = ((i - s.start) % 2 === 0) ? 'left' : 'right';
 }
 
 // ═══════════════════════════════════════════════
-//  Render one page into the element
+//  Render one page into an element
 // ═══════════════════════════════════════════════
 function render(el, i) {
   const d = PAGES[i];
@@ -438,14 +428,13 @@ function render(el, i) {
 //  Navigation helpers
 // ═══════════════════════════════════════════════
 const sectionOf = i => SECTIONS.find(s => i >= s.start && i <= s.end);
-const isEnd = s => s.label === '表紙' || s.label === '奥付';   // single-page caps
+const isEnd = s => s.label === '表紙' || s.label === '奥付';
 
 function ui() {
   const sec = sectionOf(cur);
   bnp.disabled = !(cur > sec.start || (isEnd(sec) && cur > 0));
   bnn.disabled = !(cur < sec.end   || (isEnd(sec) && cur < PAGES.length - 1));
 
-  // dots reflect pages within the current chapter
   let dh = '';
   for (let i = sec.start; i <= sec.end; i++) dh += `<div class="dot${i === cur ? ' on' : ''}"></div>`;
   dotsEl.innerHTML = dh;
@@ -453,25 +442,36 @@ function ui() {
   [...jumpEl.children].forEach((b, si) => b.classList.toggle('on', SECTIONS[si] === sec));
 }
 
-const outMap = { left: 'aoL', right: 'aoR', center: 'aoC' };
-const inMap  = { left: 'aiL', right: 'aiR', center: 'aiC' };
-
 function navigate(target, dir) {
   if (busy || target === cur) return;
   busy = true;
-  const oc = outMap[PAGES[cur].slot];
-  pg.classList.add(oc);
+
+  // dir > 0: forward (right page → left page in Japanese book)
+  //   current slides OUT to the right, new page slides IN from the left
+  // dir < 0: backward
+  //   current slides OUT to the left, new page slides IN from the right
+  const outClass = dir >= 0 ? 'slideOutRight' : 'slideOutLeft';
+  const inClass  = dir >= 0 ? 'slideInLeft'   : 'slideInRight';
+
+  cur = target;
+  render(pg2, cur);
+  pg2.style.display = '';
+  pg2.offsetHeight; // force reflow so animation starts from correct position
+
+  pg.classList.add(outClass);
+  pg2.classList.add(inClass);
+
+  ui();
+
   setTimeout(() => {
-    cur = target;
-    render(pg, cur);
-    const ic = inMap[PAGES[cur].slot];
-    pg.classList.add(ic);
-    ui();
-    setTimeout(() => { pg.classList.remove(ic); busy = false; }, 300);
-  }, 240);
+    pg.style.display = 'none';
+    pg.classList.remove(outClass);
+    pg2.classList.remove(inClass);
+    [pg, pg2] = [pg2, pg];
+    busy = false;
+  }, 360);
 }
 
-// page move — stays inside the current chapter (caps may cross to neighbour)
 function go(dir) {
   if (busy) return;
   const sec = sectionOf(cur);
@@ -480,7 +480,6 @@ function go(dir) {
   if (isEnd(sec) && n >= 0 && n < PAGES.length) navigate(n, dir);
 }
 
-// chapter jump
 function jump(si) {
   if (busy) return;
   const t = SECTIONS[si].start;
@@ -502,7 +501,8 @@ let sx = 0, sy = 0;
 pw.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
 pw.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx < 0 ? 1 : -1);
+  // スワイプ右 → 次ページ（前進）、スワイプ左 → 前ページ（後退）
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx > 0 ? 1 : -1);
 }, { passive: true });
 
 document.addEventListener('keydown', e => {
@@ -511,7 +511,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══════════════════════════════════════════════
-//  Boot (after web fonts so pagination measures correctly)
+//  Boot
 // ═══════════════════════════════════════════════
 function boot() {
   if (booted) return; booted = true;
@@ -521,12 +521,11 @@ function boot() {
 
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(boot);
-  setTimeout(boot, 1500);   // fallback
+  setTimeout(boot, 1500);
 } else {
   boot();
 }
 
-// re-paginate on resize / rotation, keep the reader on the current chapter
 let rz;
 window.addEventListener('resize', () => {
   if (!booted) return;
