@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>告白の練習　AI文庫</title>
+  <title>AI文庫</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -198,6 +198,18 @@
     .jb:hover { background: rgba(255,255,255,.14); color: #fff; }
     .jb.on { background: rgba(201,168,76,.22); border-color: rgba(201,168,76,.5); color: #e8d49a; }
 
+    /* ── Episode selector ───────────────────────── */
+    #ep-sel { display: none; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 92vw; }
+    #ep-sel.visible { display: flex; }
+    .epb {
+      font: inherit; font-size: 10px; padding: 4px 10px; border-radius: 14px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.45); cursor: pointer; letter-spacing: .06em;
+      transition: all .18s; touch-action: manipulation;
+    }
+    .epb:hover { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
+    .epb.on { background: rgba(100,160,220,.18); border-color: rgba(100,160,220,.45); color: #a8c8e8; }
+
     /* ── Swipe hint ──────────────────────────────── */
     #hint {
       position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%);
@@ -211,6 +223,7 @@
 <body>
 
 <div id="scene">
+  <div id="ep-sel"></div>
   <div id="pw">
     <div id="pg2" class="page" style="display:none"></div>
     <div id="pg"  class="page"></div>
@@ -226,64 +239,17 @@
   <div id="jump"></div>
 </div>
 
+<!-- ── Episode scripts ─────────────────────────────
+     Add one <script> per episode folder here.
+     Each script pushes its data into window.EPISODE_REGISTRY.
+─────────────────────────────────────────────────── -->
+<script src="episodes/ep01/story.js"></script>
+
 <script>
 // ═══════════════════════════════════════════════
-//  Book data
+//  Episode registry (populated by episode scripts above)
 // ═══════════════════════════════════════════════
-const BOOK = {
-  title: '告白の練習', author: '桜庭零一',
-  genre: 'コメディ恋愛', sub: 'ちょっぴり<br>不器用な<br>恋の話', pub: 'AI文庫',
-};
-
-const CHAPTERS = [
-  {
-    num: '第一章', ti: '運命のベンチ',
-    paras: [
-      '　桜田太郎、二十四歳。職業はプログラマー。趣味は読書と……告白の失敗。',
-      '　もちろん、後者は趣味ではなく実績だ。大学時代に三回、社会人になってからも二回。合計五回の告白、全て華麗に散った歴史を持つ男である。',
-      '　今回の相手は、同じ職場の山田花子、二十三歳。明るく天真爛漫な新入社員で──あろうことか──太郎の書いたコードに「すごいですね！」と本気で感動してくれた、唯一の人類だった。',
-      '　「好きです」',
-      '　太郎は部屋の鏡に向かってつぶやいた。しかし声は震え、視線は泳ぎ、全体的にどう見ても「具合が悪い人」にしか見えなかった。',
-      '　「だめだ……」',
-      '　がっくりと肩を落とし、太郎は考えた。このままでは告白する前に救急車を呼ばれてしまう。そうだ、練習だ。誰かを相手に練習すれば必ず上達するはず。',
-      '　翌日の昼休み、太郎は近くの公園へ足を向けた。',
-    ],
-  },
-  {
-    num: '第二章', ti: 'まさかの展開',
-    paras: [
-      '　公園のベンチに、白髪のおじいさんが一人座っていた。年齢は七十代後半か。穏やかな顔で鳩に餌をやっている。',
-      '　太郎は思い切って声をかけた。',
-      '　「あの、すみません。告白の練習に付き合っていただけませんか？」',
-      '　おじいさんは鳩から顔を上げ、太郎をじっと見た。そして五秒後──にこっと笑った。',
-      '　「ええよ。わしも暇じゃからな」',
-      '　関西弁のおじいさんは、予想外の快諾をしてくれた。',
-      '　「あの……ずっと前から気になっていました。あなたのことが……好きです！」',
-      '　「あら、うれしいわあ」',
-      '　おじいさんは両手を頬に当て、乙女のような返事をした。太郎は頭を抱えたが、練習を続けた。おじいさんのアドバイスは意外にも的確だった。「目を見んと」「声が小さい」「笑顔で言いなさい」。',
-      '　「山田さん、ずっと好きでした。付き合ってください！」',
-      '　「太郎くん……？」',
-      '　その声は、おじいさんのものではなかった。',
-    ],
-  },
-  {
-    num: '第三章', ti: 'ハッピーエンド？',
-    paras: [
-      '　振り返ると、そこに立っていたのは──山田花子だった。コンビニ袋を提げたまま、目を丸くして固まっている。',
-      '　「ち、ちがうんです！　これは練習で！」',
-      '　おじいさんが「そうや、わしが付き合ったんやで」と笑顔で証言してくれ、ようやく花子は事情を理解した。',
-      '　「……その告白の相手って」花子が上目遣いで訊く。「もしかして、わたし？」',
-      '　太郎は耳まで真っ赤になった。深呼吸をする。練習の成果を発揮する時だ。',
-      '　「山田花子さん。俺、ずっとあなたのことが好きでした。付き合ってください」',
-      '　花子は三秒間、じっと太郎を見つめた。それから──ぷっと吹き出した。',
-      '　「へたくそな告白。でも、すごく太郎くんらしくて、好きです」',
-      '　おじいさんが満足そうにベンチを立ち、去り際に一言。',
-      '　「花子のじいちゃんより、よろしゅうな」',
-      '　太郎はその場でしばらく固まっていた。',
-      '　　　　── 了 ──',
-    ],
-  },
-];
+window.EPISODE_REGISTRY = window.EPISODE_REGISTRY || [];
 
 // ═══════════════════════════════════════════════
 //  Element refs & state
@@ -293,15 +259,17 @@ let   pg      = document.getElementById('pg');
 let   pg2     = document.getElementById('pg2');
 const dotsEl  = document.getElementById('dots');
 const jumpEl  = document.getElementById('jump');
+const epSelEl = document.getElementById('ep-sel');
 const bnp     = document.getElementById('bnp');
 const bnn     = document.getElementById('bnn');
 
-let PAGES = [];
-let SECTIONS = [];
+let BOOK = {}, CHAPTERS = [];
+let PAGES = [], SECTIONS = [];
 let cur = 0, busy = false, booted = false;
+let currentEpIdx = 0;
 
 // ═══════════════════════════════════════════════
-//  Auto-pagination: split chapter paragraphs to fit a page
+//  Auto-pagination
 // ═══════════════════════════════════════════════
 function paginate(paras, mb) {
   const out = [];
@@ -334,7 +302,7 @@ function paginate(paras, mb) {
 }
 
 // ═══════════════════════════════════════════════
-//  Build the page list
+//  Build page list from current BOOK / CHAPTERS
 // ═══════════════════════════════════════════════
 function build() {
   const mp = document.createElement('div');
@@ -425,6 +393,32 @@ function render(el, i) {
 }
 
 // ═══════════════════════════════════════════════
+//  Episode management
+// ═══════════════════════════════════════════════
+function loadEpisode(idx) {
+  if (idx < 0 || idx >= window.EPISODE_REGISTRY.length) return;
+  currentEpIdx = idx;
+  const ep = window.EPISODE_REGISTRY[idx];
+  BOOK     = ep.book;
+  CHAPTERS = ep.chapters;
+  busy = false;
+  build(); buildJump(); buildEpSel();
+  cur = 0;
+  pg2.style.display = 'none';
+  render(pg, 0); ui();
+}
+
+function buildEpSel() {
+  const reg = window.EPISODE_REGISTRY;
+  if (reg.length <= 1) { epSelEl.classList.remove('visible'); return; }
+  epSelEl.classList.add('visible');
+  epSelEl.innerHTML = reg.map((ep, i) =>
+    `<button class="epb${i === currentEpIdx ? ' on' : ''}" onclick="selectEp(${i})">${ep.label}</button>`
+  ).join('');
+}
+window.selectEp = function(idx) { if (idx !== currentEpIdx) loadEpisode(idx); };
+
+// ═══════════════════════════════════════════════
 //  Navigation helpers
 // ═══════════════════════════════════════════════
 const sectionOf = i => SECTIONS.find(s => i >= s.start && i <= s.end);
@@ -446,21 +440,18 @@ function navigate(target, dir) {
   if (busy || target === cur) return;
   busy = true;
 
-  // dir > 0: forward (right page → left page in Japanese book)
-  //   current slides OUT to the right, new page slides IN from the left
-  // dir < 0: backward
-  //   current slides OUT to the left, new page slides IN from the right
+  // dir >= 0 (forward): current exits right, new enters from left
+  // dir <  0 (backward): current exits left, new enters from right
   const outClass = dir >= 0 ? 'slideOutRight' : 'slideOutLeft';
   const inClass  = dir >= 0 ? 'slideInLeft'   : 'slideInRight';
 
   cur = target;
   render(pg2, cur);
   pg2.style.display = '';
-  pg2.offsetHeight; // force reflow so animation starts from correct position
+  pg2.offsetHeight; // force reflow
 
   pg.classList.add(outClass);
   pg2.classList.add(inClass);
-
   ui();
 
   setTimeout(() => {
@@ -488,7 +479,9 @@ function jump(si) {
 window.jump = jump;
 
 function buildJump() {
-  jumpEl.innerHTML = SECTIONS.map((s, si) => `<button class="jb" onclick="jump(${si})">${s.label}</button>`).join('');
+  jumpEl.innerHTML = SECTIONS.map((s, si) =>
+    `<button class="jb" onclick="jump(${si})">${s.label}</button>`
+  ).join('');
 }
 
 // ═══════════════════════════════════════════════
@@ -501,7 +494,6 @@ let sx = 0, sy = 0;
 pw.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
 pw.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-  // スワイプ右 → 次ページ（前進）、スワイプ左 → 前ページ（後退）
   if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx > 0 ? 1 : -1);
 }, { passive: true });
 
@@ -515,8 +507,7 @@ document.addEventListener('keydown', e => {
 // ═══════════════════════════════════════════════
 function boot() {
   if (booted) return; booted = true;
-  build(); buildJump();
-  cur = 0; render(pg, 0); ui();
+  loadEpisode(0);
 }
 
 if (document.fonts && document.fonts.ready) {
