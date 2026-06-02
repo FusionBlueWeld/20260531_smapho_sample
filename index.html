@@ -97,7 +97,7 @@
     /* ── Body text (vertical 縦書き) ──────────────── */
     .pbody {
       position: absolute; top: 32px; bottom: 28px;
-      writing-mode: vertical-rl; text-orientation: upright;
+      writing-mode: vertical-rl; text-orientation: mixed;
       overflow: hidden; padding: 12px 8px;
       color: #281e12; font-size: min(4.6vw, 17px); line-height: 1.85;
       text-align: justify;
@@ -180,26 +180,44 @@
     .col-text p { margin: 0; }
 
     .scene-brk { color: #8a7055; opacity: 0.65; letter-spacing: 0.3em; }
+    .math-inline {
+      display: inline-block; writing-mode: horizontal-tb;
+      font-style: italic; font-size: .88em; vertical-align: middle;
+      margin: 0 .1em; letter-spacing: .02em;
+    }
 
     /* ── Scene backgrounds ──────────────────────────── */
-    body { transition: background 2s ease; }
+    body { transition: background 2.5s ease; }
     body.bg-spring {
-      background: #0d1a28;
+      /* spring blue sky */
+      background: #09192e;
       background-image:
-        repeating-linear-gradient(89.5deg, transparent 0, transparent 6px, rgba(180,210,255,.008) 6px, rgba(180,210,255,.008) 7px),
-        radial-gradient(ellipse at 50% 40%, #1a3a5a 0%, #0d1e30 60%, #07111e 100%);
+        radial-gradient(ellipse at 50% 5%, rgba(120,185,240,.24) 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 50%, #162e4a 0%, #0a1c2e 55%, #050f18 100%);
     }
-    body.bg-afternoon {
-      background: #1c1008;
+    body.bg-library {
+      /* warm wooden library, afternoon light from window */
+      background: #180e04;
       background-image:
-        repeating-linear-gradient(89.5deg, transparent 0, transparent 6px, rgba(255,200,100,.01) 6px, rgba(255,200,100,.01) 7px),
-        radial-gradient(ellipse at 50% 45%, #3a2010 0%, #271408 60%, #160c04 100%);
+        repeating-linear-gradient(0deg, transparent 0, transparent 59px,
+          rgba(210,150,70,.04) 59px, rgba(210,150,70,.04) 60px),
+        radial-gradient(ellipse at 74% 22%, rgba(255,200,90,.16) 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 55%, #321c0a 0%, #200e06 62%, #110804 100%);
     }
-    body.bg-evening {
-      background: #140e06;
+    body.bg-notebook {
+      /* dark notebook / study — cool slate */
+      background: #101420;
       background-image:
-        repeating-linear-gradient(89.5deg, transparent 0, transparent 6px, rgba(255,160,60,.01) 6px, rgba(255,160,60,.01) 7px),
-        radial-gradient(ellipse at 50% 55%, #2e1a08 0%, #1e1006 60%, #0e0804 100%);
+        repeating-linear-gradient(0deg, transparent 0, transparent 27px,
+          rgba(190,200,245,.046) 27px, rgba(190,200,245,.046) 28px),
+        radial-gradient(ellipse at 50% 50%, #191c2a 0%, #0d1018 65%, #080910 100%);
+    }
+    body.bg-night {
+      /* dusk into night sky */
+      background: #04030e;
+      background-image:
+        radial-gradient(ellipse at 50% 100%, rgba(120,60,15,.65) 0%, rgba(75,28,6,.2) 30%, transparent 58%),
+        radial-gradient(ellipse at 50% 50%, #0b081e 0%, #060416 60%, #030210 100%);
     }
 
     /* ── Slide animations ────────────────────────── */
@@ -313,88 +331,123 @@ let cur = 0, busy = false, booted = false, currentEpIdx = 0;
 // ─── Particle / atmosphere effects ───────────
 const sakura = document.getElementById('sakura');
 const sCtx   = sakura.getContext('2d');
-let particles = [], effectMode = 'none', effectRaf = 0, effectActive = false;
+let particles = [], effectMode = 'none', effectRaf = 0, effectActive = false, effectTime = 0;
 
+// ── Sakura petals (ch1 spring) ────────────────
 function spawnPetal() {
   return {
-    kind: 'petal',
-    x: Math.random() * window.innerWidth,
-    y: -10,
+    x: Math.random() * window.innerWidth, y: -10,
     r: 3 + Math.random() * 3.5,
-    vy: 0.5 + Math.random() * 1.1,
-    vx: (Math.random() - 0.5) * 0.4,
-    angle: Math.random() * Math.PI * 2,
-    va: (Math.random() - 0.5) * 0.035,
+    vy: 0.5 + Math.random() * 1.1, vx: (Math.random() - 0.5) * 0.4,
+    angle: Math.random() * Math.PI * 2, va: (Math.random() - 0.5) * 0.035,
     alpha: 0.45 + Math.random() * 0.35,
   };
 }
-
-function spawnMote(isEvening) {
-  const W = window.innerWidth, H = window.innerHeight;
-  return {
-    kind: 'mote',
-    x: Math.random() * W,
-    y: Math.random() * H,
-    r: 0.8 + Math.random() * 1.4,
-    vy: (Math.random() - 0.55) * 0.18,
-    vx: (Math.random() - 0.5) * 0.12,
-    alpha: 0.15 + Math.random() * 0.22,
-    color: isEvening ? '#ffb060' : '#ffe8a0',
-    life: 0,
-    maxLife: 280 + Math.random() * 200,
-  };
-}
-
 function drawPetal(p) {
   sCtx.save();
-  sCtx.translate(p.x, p.y);
-  sCtx.rotate(p.angle);
-  sCtx.globalAlpha = p.alpha;
-  sCtx.fillStyle = '#f8b8cc';
-  sCtx.beginPath();
-  sCtx.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2);
-  sCtx.fill();
-  sCtx.globalAlpha = p.alpha * 0.45;
-  sCtx.fillStyle = '#fff5f8';
-  sCtx.beginPath();
-  sCtx.ellipse(0, 0, p.r * 0.45, p.r * 0.28, 0, 0, Math.PI * 2);
-  sCtx.fill();
+  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
+  sCtx.globalAlpha = p.alpha; sCtx.fillStyle = '#f8b8cc';
+  sCtx.beginPath(); sCtx.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2); sCtx.fill();
+  sCtx.globalAlpha = p.alpha * 0.45; sCtx.fillStyle = '#fff5f8';
+  sCtx.beginPath(); sCtx.ellipse(0, 0, p.r * 0.45, p.r * 0.28, 0, 0, Math.PI * 2); sCtx.fill();
   sCtx.restore();
 }
 
-function drawMote(p) {
-  const fade = Math.min(p.life / 40, 1) * Math.min((p.maxLife - p.life) / 40, 1);
+// ── Light rays (ch2 library, window shimmer) ──
+function spawnRay() {
+  const W = window.innerWidth;
+  return {
+    x: W * (0.2 + Math.random() * 0.6), y: 0,
+    width: 18 + Math.random() * 28,
+    baseAlpha: 0.028 + Math.random() * 0.04,
+    angle: Math.PI * 0.22 + (Math.random() - 0.5) * 0.18,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.0015 + Math.random() * 0.0025,
+    life: 0, maxLife: 500 + Math.random() * 400,
+  };
+}
+function drawRay(p, t) {
+  const fade = Math.min(p.life / 120, 1) * Math.min((p.maxLife - p.life) / 120, 1);
+  const shimmer = 0.65 + 0.35 * Math.sin(t * p.speed + p.phase);
   sCtx.save();
-  sCtx.globalAlpha = p.alpha * fade;
-  sCtx.fillStyle = p.color;
-  sCtx.beginPath();
-  sCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-  sCtx.fill();
+  sCtx.globalAlpha = p.baseAlpha * fade * shimmer;
+  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
+  const H = window.innerHeight * 1.6;
+  const g = sCtx.createLinearGradient(-p.width / 2, 0, p.width / 2, 0);
+  g.addColorStop(0, 'transparent'); g.addColorStop(0.5, '#ffc870'); g.addColorStop(1, 'transparent');
+  sCtx.fillStyle = g;
+  sCtx.fillRect(-p.width / 2, 0, p.width, H);
+  sCtx.restore();
+}
+
+// ── Pencil strokes (ch3 notebook, fading lines) ─
+function spawnStroke() {
+  const W = window.innerWidth, H = window.innerHeight;
+  return {
+    x: Math.random() * W, y: 40 + Math.random() * (H - 80),
+    len: 25 + Math.random() * 70,
+    angle: (Math.random() - 0.5) * 0.09,
+    maxAlpha: 0.07 + Math.random() * 0.1,
+    life: 0, maxLife: 160 + Math.random() * 140,
+  };
+}
+function drawStroke(p) {
+  const fadeIn = Math.min(p.life / 25, 1);
+  const fadeOut = Math.min((p.maxLife - p.life) / 55, 1);
+  sCtx.save();
+  sCtx.globalAlpha = p.maxAlpha * fadeIn * fadeOut;
+  sCtx.strokeStyle = '#9090a0';
+  sCtx.lineWidth = 0.7 + Math.random() * 0.5;
+  sCtx.lineCap = 'round';
+  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
+  sCtx.beginPath(); sCtx.moveTo(-p.len / 2, 0); sCtx.lineTo(p.len / 2, 0);
+  sCtx.stroke();
+  sCtx.restore();
+}
+
+// ── Stars (ch4 night sky, twinkling) ─────────
+function spawnStar() {
+  return {
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: 0.4 + Math.random() * 1.3,
+    base: 0.35 + Math.random() * 0.55,
+    phase: Math.random() * Math.PI * 2,
+    freq: 0.007 + Math.random() * 0.018,
+    warm: Math.random() > 0.78,
+  };
+}
+function drawStar(p, t) {
+  const a = p.base * (0.45 + 0.55 * Math.sin(t * p.freq + p.phase));
+  sCtx.save();
+  sCtx.globalAlpha = a;
+  sCtx.fillStyle = p.warm ? '#ffd8a0' : '#e8eeff';
+  sCtx.beginPath(); sCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2); sCtx.fill();
   sCtx.restore();
 }
 
 function effectLoop() {
   if (!effectActive) return;
+  effectTime++;
   const W = sakura.width, H = sakura.height;
   sCtx.clearRect(0, 0, W, H);
-
-  const isEvening = effectMode === 'evening';
 
   if (effectMode === 'sakura') {
     if (particles.length < 14 && Math.random() < 0.12) particles.push(spawnPetal());
     particles = particles.filter(p => p.y < H + 20);
     particles.forEach(p => {
-      p.y += p.vy;
-      p.x += p.vx + Math.sin(p.y * 0.012 + p.r) * 0.35;
-      p.angle += p.va;
+      p.y += p.vy; p.x += p.vx + Math.sin(p.y * 0.012 + p.r) * 0.35; p.angle += p.va;
     });
-  } else {
-    const max = isEvening ? 10 : 16;
-    if (particles.length < max && Math.random() < 0.06) particles.push(spawnMote(isEvening));
+  } else if (effectMode === 'rays') {
+    if (particles.length < 5 && Math.random() < 0.007) particles.push(spawnRay());
     particles = particles.filter(p => p.life < p.maxLife);
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.life++;
-    });
+    particles.forEach(p => p.life++);
+  } else if (effectMode === 'strokes') {
+    if (particles.length < 9 && Math.random() < 0.045) particles.push(spawnStroke());
+    particles = particles.filter(p => p.life < p.maxLife);
+    particles.forEach(p => p.life++);
+  } else if (effectMode === 'stars') {
+    while (particles.length < 55) particles.push(spawnStar());
   }
 
   const r = pw.getBoundingClientRect();
@@ -403,22 +456,27 @@ function effectLoop() {
   sCtx.rect(0, 0, W, H);
   sCtx.rect(r.left, r.top, r.width, r.height);
   sCtx.clip('evenodd');
-  if (effectMode === 'sakura') particles.forEach(drawPetal);
-  else particles.forEach(drawMote);
+  if      (effectMode === 'sakura')  particles.forEach(drawPetal);
+  else if (effectMode === 'rays')    particles.forEach(p => drawRay(p, effectTime));
+  else if (effectMode === 'strokes') particles.forEach(drawStroke);
+  else if (effectMode === 'stars')   particles.forEach(p => drawStar(p, effectTime));
   sCtx.restore();
 
   effectRaf = requestAnimationFrame(effectLoop);
 }
 
 function setEffect(mode) {
-  if (mode === effectMode && effectActive === (mode !== 'none')) return;
+  const wasActive = effectActive;
   effectMode = mode;
+  particles = [];
   if (mode !== 'none') {
-    effectActive = true;
-    sakura.width  = window.innerWidth;
-    sakura.height = window.innerHeight;
+    if (!wasActive) {
+      effectActive = true;
+      sakura.width  = window.innerWidth;
+      sakura.height = window.innerHeight;
+      effectLoop();
+    }
     sakura.style.opacity = '1';
-    effectLoop();
   } else {
     effectActive = false;
     sakura.style.opacity = '0';
@@ -433,7 +491,7 @@ function setEffect(mode) {
 }
 
 function setBackground(cls) {
-  document.body.classList.remove('bg-spring', 'bg-afternoon', 'bg-evening');
+  document.body.classList.remove('bg-spring', 'bg-library', 'bg-notebook', 'bg-night');
   if (cls) document.body.classList.add('bg-' + cls);
 }
 
@@ -444,20 +502,17 @@ function updateEffects() {
   const lbl = sec ? sec.label : '';
 
   if (d.t === 'cover' || d.t === 'col' || lbl === '表紙' || lbl === '奥付') {
-    setEffect('none');
-    setBackground(null);
+    setEffect('none'); setBackground(null);
   } else if (lbl === '第一章の１') {
-    setEffect('sakura');
-    setBackground('spring');
+    setEffect('sakura'); setBackground('spring');
   } else if (lbl === '第一章の２') {
-    setEffect('motes');
-    setBackground('afternoon');
+    setEffect('rays'); setBackground('library');
   } else if (lbl === '第一章の３') {
-    setEffect('evening');
-    setBackground('evening');
+    setEffect('strokes'); setBackground('notebook');
+  } else if (lbl === '第一章の４') {
+    setEffect('stars'); setBackground('night');
   } else {
-    setEffect('none');
-    setBackground(null);
+    setEffect('none'); setBackground(null);
   }
 }
 
