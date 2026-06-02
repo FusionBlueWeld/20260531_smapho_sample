@@ -251,10 +251,17 @@
     .dot.on { background: rgba(255,255,255,.65); width: 15px; border-radius: 3px; }
 
     /* ── Chapter jump buttons ────────────────────── */
+    #jump-wrap {
+      position: relative; max-width: 92vw; overflow: hidden;
+      --fl: black; --fr: black;
+      -webkit-mask-image: linear-gradient(to right, var(--fl) 0px, black 44px, black calc(100% - 44px), var(--fr) 100%);
+      mask-image: linear-gradient(to right, var(--fl) 0px, black 44px, black calc(100% - 44px), var(--fr) 100%);
+    }
     #jump {
       display: flex; gap: 6px; flex-wrap: nowrap;
-      max-width: 92vw; overflow-x: auto; -webkit-overflow-scrolling: touch;
-      scrollbar-width: none; padding-bottom: 2px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; padding: 2px 4px;
+      scroll-behavior: smooth;
     }
     #jump::-webkit-scrollbar { display: none; }
     .jb {
@@ -262,6 +269,7 @@
       background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
       color: rgba(255,255,255,.58); cursor: pointer; letter-spacing: .06em;
       transition: all .18s; touch-action: manipulation;
+      flex-shrink: 0; white-space: nowrap;
     }
     .jb:hover { background: rgba(255,255,255,.14); color: #fff; }
     .jb.on { background: rgba(201,168,76,.22); border-color: rgba(201,168,76,.5); color: #e8d49a; }
@@ -307,7 +315,7 @@
     <div id="dots"></div>
     <button class="nb" id="bnn" onclick="go(1)" aria-label="次のページ">›</button>
   </div>
-  <div id="jump"></div>
+  <div id="jump-wrap"><div id="jump"></div></div>
 </div>
 
 <!-- ── Episode scripts ─────────────────────────────
@@ -675,6 +683,7 @@ function ui() {
   for (let i = sec.start; i <= sec.end; i++) dh += `<div class="dot${i === cur ? ' on' : ''}"></div>`;
   dotsEl.innerHTML = dh;
   [...jumpEl.children].forEach((b, si) => b.classList.toggle('on', SECTIONS[si] === sec));
+  scrollJumpToActive(SECTIONS.indexOf(sec));
 }
 
 function navigate(target, dir) {
@@ -722,11 +731,42 @@ function buildJump() {
   jumpEl.innerHTML = SECTIONS.map((s, si) =>
     `<button class="jb" onclick="jump(${si})">${s.label}</button>`
   ).join('');
+  requestAnimationFrame(updateJumpFade);
+}
+
+function updateJumpFade() {
+  const wrap = document.getElementById('jump-wrap');
+  if (!wrap) return;
+  const j = jumpEl;
+  const atStart = j.scrollLeft < 1;
+  const atEnd   = j.scrollLeft >= j.scrollWidth - j.clientWidth - 1;
+  wrap.style.setProperty('--fl', atStart ? 'black' : 'transparent');
+  wrap.style.setProperty('--fr', atEnd   ? 'black' : 'transparent');
+}
+
+function scrollJumpToActive(si) {
+  const btn = jumpEl.children[si];
+  if (!btn) return;
+  const j = jumpEl;
+  const jRect = j.getBoundingClientRect();
+  const bRect = btn.getBoundingClientRect();
+  const bStart = bRect.left - jRect.left + j.scrollLeft;
+  const bEnd   = bStart + btn.offsetWidth;
+  const pad = 44;
+  j.style.scrollBehavior = 'auto';
+  if (bStart - j.scrollLeft < pad) {
+    j.scrollLeft = Math.max(0, bStart - pad - 4);
+  } else if (bEnd - j.scrollLeft > j.clientWidth - pad) {
+    j.scrollLeft = bEnd - (j.clientWidth - pad) + 4;
+  }
+  j.style.scrollBehavior = '';
+  updateJumpFade();
 }
 
 // ─── Input ────────────────────────────────────
 document.getElementById('tzl').addEventListener('click', () => go(-1));
 document.getElementById('tzr').addEventListener('click', () => go(1));
+jumpEl.addEventListener('scroll', updateJumpFade, { passive: true });
 
 let sx = 0, sy = 0;
 pw.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
