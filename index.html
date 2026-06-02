@@ -179,29 +179,28 @@
     .col-text { font-size: min(3.2vw, 12px); color: #8a7055; letter-spacing: .14em; line-height: 2.3; text-align: center; }
     .col-text p { margin: 0; }
 
-    /* ── Text emphasis effects ────────────────────── */
-    @keyframes shake-v {
-      0%, 100% { transform: rotate(0deg); }
-      25%  { transform: rotate(-4deg) translateY(-1px); }
-      75%  { transform: rotate(4deg)  translateY(1px); }
-    }
-    .emph-shake { display: inline-block; animation: shake-v .32s ease infinite; }
-
-    @keyframes glow-pulse {
-      0%, 100% { color: #c09040; text-shadow: 0 0 4px rgba(180,140,60,.3); }
-      50%       { color: #e8c060; text-shadow: 0 0 10px rgba(220,180,80,.8), 0 0 22px rgba(200,160,60,.3); }
-    }
-    .emph-glow { display: inline-block; animation: glow-pulse 2.4s ease-in-out infinite; }
-
-    @keyframes blink-a {
-      0%, 100% { opacity: 1; }
-      45%, 55% { opacity: 0.05; }
-    }
-    .emph-blink { display: inline-block; color: #8B3030; animation: blink-a 1.4s ease infinite; }
-
-    .emph-bold { font-weight: 700; color: #1a0e06; }
-    .emph-em   { color: #6a4020; }
     .scene-brk { color: #8a7055; opacity: 0.65; letter-spacing: 0.3em; }
+
+    /* ── Scene backgrounds ──────────────────────────── */
+    body { transition: background 2s ease; }
+    body.bg-spring {
+      background: #0d1a28;
+      background-image:
+        repeating-linear-gradient(89.5deg, transparent 0, transparent 6px, rgba(180,210,255,.008) 6px, rgba(180,210,255,.008) 7px),
+        radial-gradient(ellipse at 50% 40%, #1a3a5a 0%, #0d1e30 60%, #07111e 100%);
+    }
+    body.bg-afternoon {
+      background: #1c1008;
+      background-image:
+        repeating-linear-gradient(89.5deg, transparent 0, transparent 6px, rgba(255,200,100,.01) 6px, rgba(255,200,100,.01) 7px),
+        radial-gradient(ellipse at 50% 45%, #3a2010 0%, #271408 60%, #160c04 100%);
+    }
+    body.bg-evening {
+      background: #140e06;
+      background-image:
+        repeating-linear-gradient(89.5deg, transparent 0, transparent 6px, rgba(255,160,60,.01) 6px, rgba(255,160,60,.01) 7px),
+        radial-gradient(ellipse at 50% 55%, #2e1a08 0%, #1e1006 60%, #0e0804 100%);
+    }
 
     /* ── Slide animations ────────────────────────── */
     @keyframes slideOutRight { from { transform: translateX(0); } to { transform: translateX(106%); } }
@@ -311,13 +310,14 @@ let BOOK = {}, CHAPTERS = [];
 let PAGES = [], SECTIONS = [];
 let cur = 0, busy = false, booted = false, currentEpIdx = 0;
 
-// ─── Cherry blossom effect ────────────────────
+// ─── Particle / atmosphere effects ───────────
 const sakura = document.getElementById('sakura');
 const sCtx   = sakura.getContext('2d');
-let petals = [], sakuraOn = false, sakuraRaf = 0;
+let particles = [], effectMode = 'none', effectRaf = 0, effectActive = false;
 
 function spawnPetal() {
   return {
+    kind: 'petal',
     x: Math.random() * window.innerWidth,
     y: -10,
     r: 3 + Math.random() * 3.5,
@@ -326,6 +326,22 @@ function spawnPetal() {
     angle: Math.random() * Math.PI * 2,
     va: (Math.random() - 0.5) * 0.035,
     alpha: 0.45 + Math.random() * 0.35,
+  };
+}
+
+function spawnMote(isEvening) {
+  const W = window.innerWidth, H = window.innerHeight;
+  return {
+    kind: 'mote',
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: 0.8 + Math.random() * 1.4,
+    vy: (Math.random() - 0.55) * 0.18,
+    vx: (Math.random() - 0.5) * 0.12,
+    alpha: 0.15 + Math.random() * 0.22,
+    color: isEvening ? '#ffb060' : '#ffe8a0',
+    life: 0,
+    maxLife: 280 + Math.random() * 200,
   };
 }
 
@@ -346,57 +362,103 @@ function drawPetal(p) {
   sCtx.restore();
 }
 
-function sakuraLoop() {
-  if (!sakuraOn) return;
+function drawMote(p) {
+  const fade = Math.min(p.life / 40, 1) * Math.min((p.maxLife - p.life) / 40, 1);
+  sCtx.save();
+  sCtx.globalAlpha = p.alpha * fade;
+  sCtx.fillStyle = p.color;
+  sCtx.beginPath();
+  sCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+  sCtx.fill();
+  sCtx.restore();
+}
+
+function effectLoop() {
+  if (!effectActive) return;
   const W = sakura.width, H = sakura.height;
   sCtx.clearRect(0, 0, W, H);
 
-  if (petals.length < 14 && Math.random() < 0.12) petals.push(spawnPetal());
-  petals = petals.filter(p => p.y < H + 20);
-  petals.forEach(p => {
-    p.y += p.vy;
-    p.x += p.vx + Math.sin(p.y * 0.012 + p.r) * 0.35;
-    p.angle += p.va;
-  });
+  const isEvening = effectMode === 'evening';
 
-  // Draw petals only in the area outside the book page (so they don't obscure text)
+  if (effectMode === 'sakura') {
+    if (particles.length < 14 && Math.random() < 0.12) particles.push(spawnPetal());
+    particles = particles.filter(p => p.y < H + 20);
+    particles.forEach(p => {
+      p.y += p.vy;
+      p.x += p.vx + Math.sin(p.y * 0.012 + p.r) * 0.35;
+      p.angle += p.va;
+    });
+  } else {
+    const max = isEvening ? 10 : 16;
+    if (particles.length < max && Math.random() < 0.06) particles.push(spawnMote(isEvening));
+    particles = particles.filter(p => p.life < p.maxLife);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.life++;
+    });
+  }
+
   const r = pw.getBoundingClientRect();
   sCtx.save();
   sCtx.beginPath();
-  sCtx.rect(0, 0, W, H);           // outer area
-  sCtx.rect(r.left, r.top, r.width, r.height);  // subtract page area (even-odd)
+  sCtx.rect(0, 0, W, H);
+  sCtx.rect(r.left, r.top, r.width, r.height);
   sCtx.clip('evenodd');
-  petals.forEach(p => drawPetal(p));
+  if (effectMode === 'sakura') particles.forEach(drawPetal);
+  else particles.forEach(drawMote);
   sCtx.restore();
 
-  sakuraRaf = requestAnimationFrame(sakuraLoop);
+  effectRaf = requestAnimationFrame(effectLoop);
 }
 
-function setSakura(active) {
-  if (active === sakuraOn) return;
-  sakuraOn = active;
-  if (active) {
+function setEffect(mode) {
+  if (mode === effectMode && effectActive === (mode !== 'none')) return;
+  effectMode = mode;
+  if (mode !== 'none') {
+    effectActive = true;
     sakura.width  = window.innerWidth;
     sakura.height = window.innerHeight;
     sakura.style.opacity = '1';
-    sakuraLoop();
+    effectLoop();
   } else {
+    effectActive = false;
     sakura.style.opacity = '0';
     setTimeout(() => {
-      if (!sakuraOn) {
-        cancelAnimationFrame(sakuraRaf);
+      if (!effectActive) {
+        cancelAnimationFrame(effectRaf);
         sCtx.clearRect(0, 0, sakura.width, sakura.height);
-        petals = [];
+        particles = [];
       }
     }, 1600);
   }
 }
 
+function setBackground(cls) {
+  document.body.classList.remove('bg-spring', 'bg-afternoon', 'bg-evening');
+  if (cls) document.body.classList.add('bg-' + cls);
+}
+
 function updateEffects() {
   if (!PAGES.length) return;
-  const d  = PAGES[cur];
-  const ep = window.EPISODE_REGISTRY[currentEpIdx];
-  setSakura(!!(ep && ep.id === 'ep01' && d.t !== 'col'));
+  const d   = PAGES[cur];
+  const sec = sectionOf(cur);
+  const lbl = sec ? sec.label : '';
+
+  if (d.t === 'cover' || d.t === 'col' || lbl === '表紙' || lbl === '奥付') {
+    setEffect('none');
+    setBackground(null);
+  } else if (lbl === '第一章の１') {
+    setEffect('sakura');
+    setBackground('spring');
+  } else if (lbl === '第一章の２') {
+    setEffect('motes');
+    setBackground('afternoon');
+  } else if (lbl === '第一章の３') {
+    setEffect('evening');
+    setBackground('evening');
+  } else {
+    setEffect('none');
+    setBackground(null);
+  }
 }
 
 // ─── Auto-pagination ──────────────────────────
@@ -619,7 +681,7 @@ document.addEventListener('keydown', e => {
 });
 
 window.addEventListener('resize', () => {
-  if (sakuraOn) { sakura.width = window.innerWidth; sakura.height = window.innerHeight; }
+  if (effectActive) { sakura.width = window.innerWidth; sakura.height = window.innerHeight; }
 });
 
 // ─── Boot ─────────────────────────────────────
