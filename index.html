@@ -82,6 +82,8 @@
     }
     .phdr-ch { font-size: 11px; color: #7a6045; letter-spacing: .12em; }
     .phdr-bk { margin-left: auto; font-size: 10px; color: #9a7a55; letter-spacing: .08em; opacity: .7; }
+    .slot-right .phdr-bk { margin-left: 0; margin-right: auto; order: 1; }
+    .slot-right .phdr-ch { order: 2; }
 
     /* ── Footer ──────────────────────────────────── */
     .pftr {
@@ -323,6 +325,7 @@
      Each script pushes its data into window.EPISODE_REGISTRY.
 ─────────────────────────────────────────────────── -->
 <script src="episodes/ep01/story.js"></script>
+<script src="episodes/ep01/ch0202.js"></script>
 
 <script>
 window.EPISODE_REGISTRY = window.EPISODE_REGISTRY || [];
