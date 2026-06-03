@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>AI文庫</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      --w: min(88vw, 420px);
+      --h: min(calc(var(--w) * 1.52), calc(100dvh - 130px));
+      font-family: 'Noto Serif JP','Yu Mincho','游明朝','Hiragino Mincho ProN',
+                   'Hiragino Mincho Pro',serif;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #0f0803;
+      background-image:
+        repeating-linear-gradient(89.5deg,
+          transparent 0, transparent 6px,
+          rgba(255,215,120,.012) 6px, rgba(255,215,120,.012) 7px),
+        repeating-linear-gradient(90.8deg,
+          transparent 0, transparent 14px,
+          rgba(255,190,80,.008) 14px, rgba(255,190,80,.008) 15px),
+        radial-gradient(ellipse at 50% 45%,
+          #2a1208 0%, #120805 65%, #090402 100%);
+      user-select: none; -webkit-user-select: none;
+    }
+
+    /* ── Book scene ──────────────────────────────── */
+    #scene { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+    /* single-page wrapper */
+    #pw { position: relative; width: var(--w); height: var(--h); overflow: hidden; }
+
+    /* ── The Page ────────────────────────────────── */
+    .page {
+      position: absolute; top: 0; left: 0;
+      width: var(--w); height: var(--h);
+      overflow: hidden; will-change: transform;
+      box-shadow: 0 9px 26px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.25);
+    }
+    .page.slot-left   { border-radius: 6px 2px 2px 6px; }
+    .page.slot-right  { border-radius: 2px 6px 6px 2px; }
+    .page.slot-center { border-radius: 5px; }
+
+    /* ── Paper base ──────────────────────────────── */
+    .pbg {
+      position: absolute; inset: 0;
+      background: linear-gradient(to left,
+        #d8c9a5 0%, #ece0c3 5%, #f5edd8 25%, #f7f0db 60%, #f4ecd7 100%);
+    }
+    .slot-right .pbg {
+      background: linear-gradient(to right,
+        #d8c9a5 0%, #ece0c3 5%, #f5edd8 25%, #f7f0db 60%, #f4ecd7 100%);
+    }
+    .pbg::after {
+      content: ''; position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 340'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 .87 0 0 0 0 .79 0 0 0 0 .63 0 0 0 .17 0'/%3E%3C/filter%3E%3Crect width='240' height='340' filter='url(%23p)'/%3E%3C/svg%3E");
+      background-size: cover; mix-blend-mode: multiply; pointer-events: none;
+    }
+
+    /* spine + outer edge shadows */
+    .psp { position: absolute; top: 0; width: 20px; height: 100%; z-index: 5; pointer-events: none; }
+    .pedge { position: absolute; top: 0; width: 3px; height: 100%; z-index: 5; pointer-events: none; background: rgba(0,0,0,.08); }
+    .slot-left  .psp  { right: 0; background: linear-gradient(to left,  rgba(0,0,0,.30), rgba(0,0,0,.05) 60%, transparent); }
+    .slot-left  .pedge{ left: 0; }
+    .slot-right .psp  { left: 0;  background: linear-gradient(to right, rgba(0,0,0,.30), rgba(0,0,0,.05) 60%, transparent); }
+    .slot-right .pedge{ right: 0; }
+
+    /* ── Header ──────────────────────────────────── */
+    .phdr {
+      position: absolute; top: 0; left: 0; right: 0; height: 32px;
+      display: flex; align-items: center; padding: 0 18px;
+      border-bottom: 1px solid rgba(110,80,45,.18); z-index: 3;
+    }
+    .phdr-ch { font-size: 11px; color: #7a6045; letter-spacing: .12em; }
+    .phdr-bk { margin-left: auto; font-size: 10px; color: #9a7a55; letter-spacing: .08em; opacity: .7; }
+    .slot-right .phdr-bk { margin-left: 0; margin-right: auto; order: 1; }
+    .slot-right .phdr-ch { order: 2; }
+
+    /* ── Footer ──────────────────────────────────── */
+    .pftr {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 28px;
+      display: flex; align-items: center; padding: 0 18px;
+      border-top: 1px solid rgba(110,80,45,.14); z-index: 3;
+    }
+    .pnum { font-size: 12px; color: #8a6840; letter-spacing: .06em; }
+    .slot-left  .pnum { margin-right: auto; }
+    .slot-right .pnum { margin-left: auto; }
+    .slot-center .pnum { margin: 0 auto; }
+
+    /* ── Body text (vertical 縦書き) ──────────────── */
+    .pbody {
+      position: absolute; top: 32px; bottom: 28px;
+      writing-mode: vertical-rl; text-orientation: mixed;
+      overflow: hidden; padding: 12px 8px;
+      color: #281e12; font-size: min(4.6vw, 17px); line-height: 1.85;
+      text-align: justify;
+      -webkit-text-size-adjust: none; text-size-adjust: none;
+    }
+    .slot-left   .pbody { left: 8px;  right: 24px; }
+    .slot-right  .pbody { right: 8px; left: 24px; }
+    .slot-center .pbody { left: 12px; right: 12px; }
+    .pbody p { margin: 0; }
+
+    /* ── Cover ───────────────────────────────────── */
+    .t-cover .pbg {
+      background: linear-gradient(160deg, #162240 0%, #0a1528 50%, #182a48 100%);
+    }
+    .t-cover .pbg::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 340'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.45' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 .08 0 0 0 0 .18 0 0 0 0 .38 0 0 0 .3 0'/%3E%3C/filter%3E%3Crect width='240' height='340' filter='url(%23p)'/%3E%3C/svg%3E");
+    }
+    /* static sakura petals as decorative dots on cover */
+    .t-cover .pbg::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        radial-gradient(ellipse 4px 2.5px at 22% 18%, rgba(248,184,204,.42) 100%, transparent 100%),
+        radial-gradient(ellipse 3px 2px   at 74% 13%, rgba(248,184,204,.32) 100%, transparent 100%),
+        radial-gradient(ellipse 5px 3px   at 83% 34%, rgba(248,184,204,.38) 100%, transparent 100%),
+        radial-gradient(ellipse 3.5px 2px at 11% 60%, rgba(248,184,204,.28) 100%, transparent 100%),
+        radial-gradient(ellipse 4px 2.5px at 58% 77%, rgba(248,184,204,.35) 100%, transparent 100%),
+        radial-gradient(ellipse 3px 2px   at 38% 88%, rgba(248,184,204,.25) 100%, transparent 100%),
+        radial-gradient(ellipse 3.5px 2px at 90% 60%, rgba(248,184,204,.3)  100%, transparent 100%);
+    }
+    /* Cover frame — blue-silver toned, well inside page edges */
+    .cvr-frame {
+      position: absolute; inset: 16px;
+      border: 1.5px solid rgba(160,185,220,.45);
+      border-radius: 3px; z-index: 2; pointer-events: none;
+    }
+    .cvr-frame::after {
+      content: ''; position: absolute; inset: 7px;
+      border: .5px solid rgba(160,185,220,.2); border-radius: 2px;
+    }
+    .cvr-sp {
+      position: absolute; top: 0; right: 0; width: 15px; height: 100%; z-index: 4; pointer-events: none;
+      background: linear-gradient(to left, rgba(5,12,25,.95) 0%, rgba(5,12,25,.4) 50%, transparent 100%);
+    }
+    /* body area respects frame: top/bottom clear the frame + inner border + margin */
+    .cvr-body {
+      position: absolute; z-index: 3;
+      top: 42px; bottom: 72px; left: 30px; right: 30px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .cvr-genre { font-size: min(2.6vw, 10px); color: #a0b8d8; letter-spacing: .4em; opacity: .85; }
+    .cvr-titles { display: flex; gap: 14px; align-items: center; }
+    .cvr-title {
+      writing-mode: vertical-rl; font-size: min(12vw, 48px); font-weight: 700;
+      color: #e8f0f8; letter-spacing: .22em; line-height: 1.25;
+      text-shadow: 0 2px 16px rgba(0,0,0,.8), 0 0 40px rgba(100,160,230,.18);
+    }
+    .cvr-sub {
+      writing-mode: vertical-rl; font-size: min(3.4vw, 13px); color: #8ab0d0;
+      letter-spacing: .16em; opacity: .85; line-height: 1.75;
+    }
+    .cvr-div { width: 48px; height: 1px; background: linear-gradient(to right, transparent, rgba(160,185,220,.55), transparent); }
+    /* foot area is anchored above the frame bottom — bottom:32px clears inset:16px + breathing */
+    .cvr-foot {
+      position: absolute; bottom: 32px; left: 30px; right: 30px; z-index: 3;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+    }
+    .cvr-author { font-size: min(3.2vw, 12px); color: #b0c8dc; letter-spacing: .22em; }
+    .cvr-pub    { font-size: min(2.5vw, 10px); color: rgba(160,185,220,.6); letter-spacing: .32em; }
+
+    /* ── Chapter title page ───────────────────────── */
+    .t-ch .pbody { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+    .ch-num  { font-size: min(3vw, 12px); color: #7a6045; letter-spacing: .3em; }
+    .ch-rule { width: 1px; height: 30px; background: linear-gradient(to bottom, transparent, #a0845a, transparent); }
+    .ch-title{ font-size: min(7.5vw, 28px); font-weight: 700; color: #281e12; letter-spacing: .14em; line-height: 1.4; }
+
+    /* ── Colophon ─────────────────────────────────── */
+    .t-col .pbody { display: flex; align-items: center; justify-content: center; }
+    .col-text { font-size: min(3.2vw, 12px); color: #8a7055; letter-spacing: .14em; line-height: 2.3; text-align: center; }
+    .col-text p { margin: 0; }
+
+    .scene-brk { color: #8a7055; opacity: 0.65; letter-spacing: 0.3em; }
+    .math-inline {
+      display: inline-block; writing-mode: horizontal-tb;
+      font-style: italic; font-size: .88em; vertical-align: middle;
+      margin: 0 .1em; letter-spacing: .02em;
+    }
+
+    /* ── Scene backgrounds ──────────────────────────── */
+    body { transition: background 2.5s ease; }
+    body.bg-spring {
+      /* spring blue sky */
+      background: #09192e;
+      background-image:
+        radial-gradient(ellipse at 50% 5%, rgba(120,185,240,.24) 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 50%, #162e4a 0%, #0a1c2e 55%, #050f18 100%);
+    }
+    body.bg-library {
+      /* warm wooden library, afternoon light from window */
+      background: #180e04;
+      background-image:
+        repeating-linear-gradient(0deg, transparent 0, transparent 59px,
+          rgba(210,150,70,.04) 59px, rgba(210,150,70,.04) 60px),
+        radial-gradient(ellipse at 74% 22%, rgba(255,200,90,.16) 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 55%, #321c0a 0%, #200e06 62%, #110804 100%);
+    }
+    body.bg-notebook {
+      /* dark notebook / study — cool slate */
+      background: #101420;
+      background-image:
+        repeating-linear-gradient(0deg, transparent 0, transparent 27px,
+          rgba(190,200,245,.046) 27px, rgba(190,200,245,.046) 28px),
+        radial-gradient(ellipse at 50% 50%, #191c2a 0%, #0d1018 65%, #080910 100%);
+    }
+    body.bg-night {
+      /* dusk into night sky */
+      background: #04030e;
+      background-image:
+        radial-gradient(ellipse at 50% 100%, rgba(120,60,15,.65) 0%, rgba(75,28,6,.2) 30%, transparent 58%),
+        radial-gradient(ellipse at 50% 50%, #0b081e 0%, #060416 60%, #030210 100%);
+    }
+
+    /* ── Slide animations ────────────────────────── */
+    @keyframes slideOutRight { from { transform: translateX(0); } to { transform: translateX(106%); } }
+    @keyframes slideInLeft   { from { transform: translateX(-106%); } to { transform: translateX(0); } }
+    @keyframes slideOutLeft  { from { transform: translateX(0); } to { transform: translateX(-106%); } }
+    @keyframes slideInRight  { from { transform: translateX(106%); } to { transform: translateX(0); } }
+    .slideOutRight { animation: slideOutRight .32s ease-in  forwards; }
+    .slideInLeft   { animation: slideInLeft   .32s ease-out forwards; }
+    .slideOutLeft  { animation: slideOutLeft  .32s ease-in  forwards; }
+    .slideInRight  { animation: slideInRight  .32s ease-out forwards; }
+
+    /* ── Tap zones ───────────────────────────────── */
+    .tz { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: pointer; }
+    #tzl { left: 0; } #tzr { right: 0; }
+
+    /* ── Navigation ─────────────────────────────── */
+    #nav { display: flex; align-items: center; gap: 16px; }
+    .nb {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.62); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .18s; touch-action: manipulation;
+    }
+    .nb:hover:not(:disabled) { background: rgba(255,255,255,.15); color: rgba(255,255,255,.92); }
+    .nb:active:not(:disabled) { transform: scale(.9); }
+    .nb:disabled { opacity: .18; cursor: default; }
+    #dots { display: flex; gap: 5px; align-items: center; max-width: 50vw; flex-wrap: wrap; justify-content: center; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.2); transition: all .3s; flex-shrink: 0; }
+    .dot.on { background: rgba(255,255,255,.65); width: 15px; border-radius: 3px; }
+
+    /* ── Chapter jump buttons ────────────────────── */
+    #jump-wrap {
+      position: relative; max-width: 92vw; overflow: hidden;
+      --fl: black; --fr: black;
+      -webkit-mask-image: linear-gradient(to right, var(--fl) 0px, black 44px, black calc(100% - 44px), var(--fr) 100%);
+      mask-image: linear-gradient(to right, var(--fl) 0px, black 44px, black calc(100% - 44px), var(--fr) 100%);
+    }
+    #jump {
+      display: flex; gap: 6px; flex-wrap: nowrap;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; padding: 2px 4px;
+      scroll-behavior: smooth;
+    }
+    #jump::-webkit-scrollbar { display: none; }
+    .jb {
+      font: inherit; font-size: 10.5px; padding: 5px 11px; border-radius: 14px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.58); cursor: pointer; letter-spacing: .06em;
+      transition: all .18s; touch-action: manipulation;
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .jb:hover { background: rgba(255,255,255,.14); color: #fff; }
+    .jb.on { background: rgba(201,168,76,.22); border-color: rgba(201,168,76,.5); color: #e8d49a; }
+
+    /* ── Episode selector ───────────────────────── */
+    #ep-sel { display: none; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 92vw; }
+    #ep-sel.visible { display: flex; }
+    .epb {
+      font: inherit; font-size: 10px; padding: 4px 10px; border-radius: 14px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.45); cursor: pointer; letter-spacing: .06em;
+      transition: all .18s; touch-action: manipulation;
+    }
+    .epb:hover { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
+    .epb.on { background: rgba(100,160,220,.18); border-color: rgba(100,160,220,.45); color: #a8c8e8; }
+
+    /* ── Swipe hint ──────────────────────────────── */
+    #hint {
+      position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%);
+      font-size: 9.5px; color: rgba(255,255,255,.45); letter-spacing: .12em;
+      white-space: nowrap; pointer-events: none;
+      animation: hintfade 4s ease forwards;
+    }
+    @keyframes hintfade { 0%{opacity:0} 18%{opacity:1} 75%{opacity:1} 100%{opacity:0} }
+  </style>
+</head>
+<body>
+
+<!-- Cherry blossom canvas — pointer-events:none so taps pass through -->
+<canvas id="sakura" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:150;opacity:0;transition:opacity 1.5s ease;"></canvas>
+
+<div id="scene">
+  <div id="ep-sel"></div>
+  <div id="pw">
+    <div id="pg2" class="page" style="display:none"></div>
+    <div id="pg"  class="page"></div>
+    <div class="tz" id="tzl"></div>
+    <div class="tz" id="tzr"></div>
+    <div id="hint">タップ／スワイプでめくる</div>
+  </div>
+  <div id="nav">
+    <button class="nb" id="bnp" onclick="go(-1)" aria-label="前のページ">‹</button>
+    <div id="dots"></div>
+    <button class="nb" id="bnn" onclick="go(1)" aria-label="次のページ">›</button>
+  </div>
+  <div id="jump-wrap"><div id="jump"></div></div>
+</div>
+
+<!-- ── Episode scripts ─────────────────────────────
+     Add one <script> per episode folder here.
+     Each script pushes its data into window.EPISODE_REGISTRY.
+─────────────────────────────────────────────────── -->
+<script src="episodes/ep01/story.js"></script>
+
+<script>
+window.EPISODE_REGISTRY = window.EPISODE_REGISTRY || [];
+
+// ─── Element refs & state ─────────────────────
+const pw      = document.getElementById('pw');
+let   pg      = document.getElementById('pg');
+let   pg2     = document.getElementById('pg2');
+const dotsEl  = document.getElementById('dots');
+const jumpEl  = document.getElementById('jump');
+const epSelEl = document.getElementById('ep-sel');
+const bnp     = document.getElementById('bnp');
+const bnn     = document.getElementById('bnn');
+
+let BOOK = {}, CHAPTERS = [];
+let PAGES = [], SECTIONS = [];
+let cur = 0, busy = false, booted = false, currentEpIdx = 0;
+
+// ─── Particle / atmosphere effects ───────────
+const sakura = document.getElementById('sakura');
+const sCtx   = sakura.getContext('2d');
+let particles = [], effectMode = 'none', effectRaf = 0, effectActive = false, effectTime = 0;
+
+// ── Sakura petals (ch1 spring) ────────────────
+function spawnPetal() {
+  return {
+    x: Math.random() * window.innerWidth, y: -10,
+    r: 3 + Math.random() * 3.5,
+    vy: 0.5 + Math.random() * 1.1, vx: (Math.random() - 0.5) * 0.4,
+    angle: Math.random() * Math.PI * 2, va: (Math.random() - 0.5) * 0.035,
+    alpha: 0.45 + Math.random() * 0.35,
+  };
+}
+function drawPetal(p) {
+  sCtx.save();
+  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
+  sCtx.globalAlpha = p.alpha; sCtx.fillStyle = '#f8b8cc';
+  sCtx.beginPath(); sCtx.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2); sCtx.fill();
+  sCtx.globalAlpha = p.alpha * 0.45; sCtx.fillStyle = '#fff5f8';
+  sCtx.beginPath(); sCtx.ellipse(0, 0, p.r * 0.45, p.r * 0.28, 0, 0, Math.PI * 2); sCtx.fill();
+  sCtx.restore();
+}
+
+// ── Light rays (ch2 library, window shimmer) ──
+function spawnRay() {
+  const W = window.innerWidth;
+  return {
+    x: W * (0.2 + Math.random() * 0.6), y: 0,
+    width: 18 + Math.random() * 28,
+    baseAlpha: 0.028 + Math.random() * 0.04,
+    angle: Math.PI * 0.22 + (Math.random() - 0.5) * 0.18,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.0015 + Math.random() * 0.0025,
+    life: 0, maxLife: 500 + Math.random() * 400,
+  };
+}
+function drawRay(p, t) {
+  const fade = Math.min(p.life / 120, 1) * Math.min((p.maxLife - p.life) / 120, 1);
+  const shimmer = 0.65 + 0.35 * Math.sin(t * p.speed + p.phase);
+  sCtx.save();
+  sCtx.globalAlpha = p.baseAlpha * fade * shimmer;
+  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
+  const H = window.innerHeight * 1.6;
+  const g = sCtx.createLinearGradient(-p.width / 2, 0, p.width / 2, 0);
+  g.addColorStop(0, 'transparent'); g.addColorStop(0.5, '#ffc870'); g.addColorStop(1, 'transparent');
+  sCtx.fillStyle = g;
+  sCtx.fillRect(-p.width / 2, 0, p.width, H);
+  sCtx.restore();
+}
+
+// ── Pencil strokes (ch3 notebook, fading lines) ─
+function spawnStroke() {
+  const W = window.innerWidth, H = window.innerHeight;
+  return {
+    x: Math.random() * W, y: 40 + Math.random() * (H - 80),
+    len: 25 + Math.random() * 70,
+    angle: (Math.random() - 0.5) * 0.09,
+    maxAlpha: 0.07 + Math.random() * 0.1,
+    life: 0, maxLife: 160 + Math.random() * 140,
+  };
+}
+function drawStroke(p) {
+  const fadeIn = Math.min(p.life / 25, 1);
+  const fadeOut = Math.min((p.maxLife - p.life) / 55, 1);
+  sCtx.save();
+  sCtx.globalAlpha = p.maxAlpha * fadeIn * fadeOut;
+  sCtx.strokeStyle = '#9090a0';
+  sCtx.lineWidth = 0.7 + Math.random() * 0.5;
+  sCtx.lineCap = 'round';
+  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
+  sCtx.beginPath(); sCtx.moveTo(-p.len / 2, 0); sCtx.lineTo(p.len / 2, 0);
+  sCtx.stroke();
+  sCtx.restore();
+}
+
+// ── Stars (ch4 night sky, twinkling) ─────────
+function spawnStar() {
+  return {
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: 0.4 + Math.random() * 1.3,
+    base: 0.35 + Math.random() * 0.55,
+    phase: Math.random() * Math.PI * 2,
+    freq: 0.007 + Math.random() * 0.018,
+    warm: Math.random() > 0.78,
+  };
+}
+function drawStar(p, t) {
+  const a = p.base * (0.45 + 0.55 * Math.sin(t * p.freq + p.phase));
+  sCtx.save();
+  sCtx.globalAlpha = a;
+  sCtx.fillStyle = p.warm ? '#ffd8a0' : '#e8eeff';
+  sCtx.beginPath(); sCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2); sCtx.fill();
+  sCtx.restore();
+}
+
+function effectLoop() {
+  if (!effectActive) return;
+  effectTime++;
+  const W = sakura.width, H = sakura.height;
+  sCtx.clearRect(0, 0, W, H);
+
+  if (effectMode === 'sakura') {
+    if (particles.length < 14 && Math.random() < 0.12) particles.push(spawnPetal());
+    particles = particles.filter(p => p.y < H + 20);
+    particles.forEach(p => {
+      p.y += p.vy; p.x += p.vx + Math.sin(p.y * 0.012 + p.r) * 0.35; p.angle += p.va;
+    });
+  } else if (effectMode === 'rays') {
+    if (particles.length < 5 && Math.random() < 0.007) particles.push(spawnRay());
+    particles = particles.filter(p => p.life < p.maxLife);
+    particles.forEach(p => p.life++);
+  } else if (effectMode === 'strokes') {
+    if (particles.length < 9 && Math.random() < 0.045) particles.push(spawnStroke());
+    particles = particles.filter(p => p.life < p.maxLife);
+    particles.forEach(p => p.life++);
+  } else if (effectMode === 'stars') {
+    while (particles.length < 55) particles.push(spawnStar());
+  }
+
+  const r = pw.getBoundingClientRect();
+  sCtx.save();
+  sCtx.beginPath();
+  sCtx.rect(0, 0, W, H);
+  sCtx.rect(r.left, r.top, r.width, r.height);
+  sCtx.clip('evenodd');
+  if      (effectMode === 'sakura')  particles.forEach(drawPetal);
+  else if (effectMode === 'rays')    particles.forEach(p => drawRay(p, effectTime));
+  else if (effectMode === 'strokes') particles.forEach(drawStroke);
+  else if (effectMode === 'stars')   particles.forEach(p => drawStar(p, effectTime));
+  sCtx.restore();
+
+  effectRaf = requestAnimationFrame(effectLoop);
+}
+
+function setEffect(mode) {
+  const wasActive = effectActive;
+  effectMode = mode;
+  particles = [];
+  if (mode !== 'none') {
+    if (!wasActive) {
+      effectActive = true;
+      sakura.width  = window.innerWidth;
+      sakura.height = window.innerHeight;
+      effectLoop();
+    }
+    sakura.style.opacity = '1';
+  } else {
+    effectActive = false;
+    sakura.style.opacity = '0';
+    setTimeout(() => {
+      if (!effectActive) {
+        cancelAnimationFrame(effectRaf);
+        sCtx.clearRect(0, 0, sakura.width, sakura.height);
+        particles = [];
+      }
+    }, 1600);
+  }
+}
+
+function setBackground(cls) {
+  document.body.classList.remove('bg-spring', 'bg-library', 'bg-notebook', 'bg-night');
+  if (cls) document.body.classList.add('bg-' + cls);
+}
+
+function updateEffects() {
+  if (!PAGES.length) return;
+  const d   = PAGES[cur];
+  const sec = sectionOf(cur);
+  const lbl = sec ? sec.label : '';
+
+  if (d.t === 'cover' || d.t === 'col' || lbl === '表紙' || lbl === '奥付') {
+    setEffect('none'); setBackground(null);
+  } else if (lbl === '第一章の１') {
+    setEffect('sakura'); setBackground('spring');
+  } else if (lbl === '第一章の２') {
+    setEffect('rays'); setBackground('library');
+  } else if (lbl === '第一章の３') {
+    setEffect('strokes'); setBackground('notebook');
+  } else if (lbl === '第一章の４') {
+    setEffect('stars'); setBackground('night');
+  } else {
+    setEffect('none'); setBackground(null);
+  }
+}
+
+// ─── Auto-pagination ──────────────────────────
+function paginate(paras, mb) {
+  const out = [];
+  let buf = [];
+  const setb = a => { mb.innerHTML = a.map(x => `<p>${x}</p>`).join(''); };
+  const fits = () => mb.scrollWidth <= mb.clientWidth + 1;
+
+  for (const para of paras) {
+    buf.push(para); setb(buf);
+    if (fits()) continue;
+    buf.pop();
+    if (buf.length) { out.push(buf); buf = []; }
+
+    let rem = para;
+    while (rem.length) {
+      setb([rem]);
+      if (fits()) { buf = [rem]; break; }
+      let lo = 1, hi = rem.length, best = 1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        setb([rem.slice(0, mid)]);
+        if (fits()) { best = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      out.push([rem.slice(0, best)]);
+      rem = rem.slice(best);
+    }
+  }
+  if (buf.length) out.push(buf);
+  return out;
+}
+
+// ─── Build page list ──────────────────────────
+function build() {
+  const mp = document.createElement('div');
+  mp.className = 'page slot-left t-tx';
+  mp.style.cssText = 'visibility:hidden;pointer-events:none;';
+  mp.innerHTML = '<div class="pbg"></div><div class="psp"></div><div class="pedge"></div>' +
+    '<div class="phdr"><span class="phdr-ch">x</span><span class="phdr-bk">x</span></div>' +
+    '<div class="pbody"></div><div class="pftr"><span class="pnum">0</span></div>';
+  pw.appendChild(mp);
+  const mb = mp.querySelector('.pbody');
+
+  PAGES = []; SECTIONS = [];
+  let pn = 0;
+
+  PAGES.push({ t: 'cover', slot: 'center' });
+  SECTIONS.push({ label: '表紙', start: 0, end: 0 });
+
+  for (const ch of CHAPTERS) {
+    const start = PAGES.length;
+    const lb = `${ch.num}　${ch.ti}`;
+    pn++; PAGES.push({ t: 'ch', ch: ch.num, ti: ch.ti, lb, pn });
+    for (const ps of paginate(ch.paras, mb)) {
+      pn++; PAGES.push({ t: 'tx', ps, lb, pn });
+    }
+    SECTIONS.push({ label: ch.num, start, end: PAGES.length - 1 });
+  }
+
+  const ci = PAGES.length;
+  PAGES.push({ t: 'col', slot: 'center' });
+  SECTIONS.push({ label: '奥付', start: ci, end: ci });
+
+  pw.removeChild(mp);
+
+  for (const s of SECTIONS)
+    for (let i = s.start; i <= s.end; i++)
+      if (!PAGES[i].slot) PAGES[i].slot = ((i - s.start) % 2 === 0) ? 'left' : 'right';
+}
+
+// ─── Render one page ──────────────────────────
+function render(el, i) {
+  const d = PAGES[i];
+  el.className = `page slot-${d.slot} t-${d.t}`;
+
+  if (d.t === 'cover') {
+    el.innerHTML = `
+      <div class="pbg"></div><div class="cvr-sp"></div><div class="cvr-frame"></div>
+      <div class="cvr-body">
+        <div class="cvr-genre">${BOOK.genre}</div>
+        <div class="cvr-titles">
+          <div class="cvr-title">${BOOK.title}</div>
+          <div class="cvr-sub">${BOOK.sub}</div>
+        </div>
+        <div class="cvr-div"></div>
+      </div>
+      <div class="cvr-foot">
+        <div class="cvr-author">著　${BOOK.author}</div>
+        <div class="cvr-pub">${BOOK.pub}</div>
+      </div>`;
+
+  } else if (d.t === 'ch') {
+    el.innerHTML = `
+      <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
+      <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
+      <div class="pbody">
+        <span class="ch-num">${d.ch}</span><div class="ch-rule"></div><span class="ch-title">${d.ti}</span>
+      </div>
+      <div class="pftr"><span class="pnum">${d.pn}</span></div>`;
+
+  } else if (d.t === 'tx') {
+    el.innerHTML = `
+      <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
+      <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
+      <div class="pbody">${d.ps.map(p => `<p>${p}</p>`).join('')}</div>
+      <div class="pftr"><span class="pnum">${d.pn}</span></div>`;
+
+  } else {
+    const y = new Date().getFullYear();
+    el.innerHTML = `
+      <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
+      <div class="phdr"><span class="phdr-ch">奥付</span><span class="phdr-bk">${BOOK.title}</span></div>
+      <div class="pbody"><div class="col-text">
+        <p>${BOOK.title}</p><p>${y}年　初版発行</p><p>著者　${BOOK.author}</p><p>発行所　${BOOK.pub}</p>
+      </div></div>
+      <div class="pftr"><span class="pnum">―</span></div>`;
+  }
+}
+
+// ─── Episode management ───────────────────────
+function loadEpisode(idx) {
+  if (idx < 0 || idx >= window.EPISODE_REGISTRY.length) return;
+  currentEpIdx = idx;
+  const ep = window.EPISODE_REGISTRY[idx];
+  BOOK = ep.book; CHAPTERS = ep.chapters;
+  busy = false;
+  build(); buildJump(); buildEpSel();
+  cur = 0;
+  pg2.style.display = 'none';
+  render(pg, 0); ui();
+  updateEffects();
+}
+
+function buildEpSel() {
+  const reg = window.EPISODE_REGISTRY;
+  if (reg.length <= 1) { epSelEl.classList.remove('visible'); return; }
+  epSelEl.classList.add('visible');
+  epSelEl.innerHTML = reg.map((ep, i) =>
+    `<button class="epb${i === currentEpIdx ? ' on' : ''}" onclick="selectEp(${i})">${ep.label}</button>`
+  ).join('');
+}
+window.selectEp = function (idx) { if (idx !== currentEpIdx) loadEpisode(idx); };
+
+// ─── Navigation helpers ───────────────────────
+const sectionOf = i => SECTIONS.find(s => i >= s.start && i <= s.end);
+const isEnd = s => s.label === '表紙' || s.label === '奥付';
+
+function ui() {
+  const sec = sectionOf(cur);
+  bnp.disabled = !(cur > sec.start || (isEnd(sec) && cur > 0));
+  bnn.disabled = !(cur < sec.end   || (isEnd(sec) && cur < PAGES.length - 1));
+  let dh = '';
+  for (let i = sec.start; i <= sec.end; i++) dh += `<div class="dot${i === cur ? ' on' : ''}"></div>`;
+  dotsEl.innerHTML = dh;
+  [...jumpEl.children].forEach((b, si) => b.classList.toggle('on', SECTIONS[si] === sec));
+  scrollJumpToActive(SECTIONS.indexOf(sec));
+}
+
+function navigate(target, dir) {
+  if (busy || target === cur) return;
+  busy = true;
+
+  const outClass = dir >= 0 ? 'slideOutRight' : 'slideOutLeft';
+  const inClass  = dir >= 0 ? 'slideInLeft'   : 'slideInRight';
+
+  cur = target;
+  render(pg2, cur);
+  pg2.style.display = '';
+  pg2.offsetHeight;
+
+  pg.classList.add(outClass);
+  pg2.classList.add(inClass);
+  ui();
+
+  setTimeout(() => {
+    pg.style.display = 'none';
+    pg.classList.remove(outClass);
+    pg2.classList.remove(inClass);
+    [pg, pg2] = [pg2, pg];
+    busy = false;
+    updateEffects();
+  }, 360);
+}
+
+function go(dir) {
+  if (busy) return;
+  const sec = sectionOf(cur);
+  const n = cur + dir;
+  if (n >= sec.start && n <= sec.end) { navigate(n, dir); return; }
+  if (isEnd(sec) && n >= 0 && n < PAGES.length) navigate(n, dir);
+}
+
+function jump(si) {
+  if (busy) return;
+  const t = SECTIONS[si].start;
+  if (t !== cur) navigate(t, t > cur ? 1 : -1);
+}
+window.jump = jump;
+
+function buildJump() {
+  jumpEl.innerHTML = SECTIONS.map((s, si) =>
+    `<button class="jb" onclick="jump(${si})">${s.label}</button>`
+  ).join('');
+  requestAnimationFrame(updateJumpFade);
+}
+
+function updateJumpFade() {
+  const wrap = document.getElementById('jump-wrap');
+  if (!wrap) return;
+  const j = jumpEl;
+  const atStart = j.scrollLeft < 1;
+  const atEnd   = j.scrollLeft >= j.scrollWidth - j.clientWidth - 1;
+  wrap.style.setProperty('--fl', atStart ? 'black' : 'transparent');
+  wrap.style.setProperty('--fr', atEnd   ? 'black' : 'transparent');
+}
+
+function scrollJumpToActive(si) {
+  const btn = jumpEl.children[si];
+  if (!btn) return;
+  const j = jumpEl;
+  const jRect = j.getBoundingClientRect();
+  const bRect = btn.getBoundingClientRect();
+  const bStart = bRect.left - jRect.left + j.scrollLeft;
+  const bEnd   = bStart + btn.offsetWidth;
+  const pad = 44;
+  j.style.scrollBehavior = 'auto';
+  if (bStart - j.scrollLeft < pad) {
+    j.scrollLeft = Math.max(0, bStart - pad - 4);
+  } else if (bEnd - j.scrollLeft > j.clientWidth - pad) {
+    j.scrollLeft = bEnd - (j.clientWidth - pad) + 4;
+  }
+  j.style.scrollBehavior = '';
+  updateJumpFade();
+}
+
+// ─── Input ────────────────────────────────────
+document.getElementById('tzl').addEventListener('click', () => go(-1));
+document.getElementById('tzr').addEventListener('click', () => go(1));
+jumpEl.addEventListener('scroll', updateJumpFade, { passive: true });
+
+let sx = 0, sy = 0;
+pw.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+pw.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx > 0 ? 1 : -1);
+}, { passive: true });
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+});
+
+window.addEventListener('resize', () => {
+  if (effectActive) { sakura.width = window.innerWidth; sakura.height = window.innerHeight; }
+});
+
+// ─── Boot ─────────────────────────────────────
+function boot() {
+  if (booted) return; booted = true;
+  loadEpisode(0);
+}
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(boot);
+  setTimeout(boot, 1500);
+} else { boot(); }
+
+let rz;
+window.addEventListener('resize', () => {
+  if (!booted) return;
+  clearTimeout(rz);
+  rz = setTimeout(() => {
+    const si = SECTIONS.indexOf(sectionOf(cur));
+    build(); buildJump();
+    cur = SECTIONS[Math.min(si, SECTIONS.length - 1)].start;
+    render(pg, cur); ui();
+  }, 250);
+});
+</script>
+</body>
+</html>
