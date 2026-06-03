@@ -252,22 +252,27 @@
     .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.2); transition: all .3s; flex-shrink: 0; }
     .dot.on { background: rgba(255,255,255,.65); width: 15px; border-radius: 3px; }
 
-    /* ── Chapter jump (two-level: 章 ▸ ストーリー) ── */
-    #nav-jump { display: flex; flex-direction: column; align-items: center; }
-    #jump-wrap, #sub-wrap {
+    /* ── Chapter jump (two-level inline) ─────────── */
+    #jump-wrap {
       position: relative; max-width: 92vw; overflow: hidden;
       --fl: black; --fr: black;
       -webkit-mask-image: linear-gradient(to right, var(--fl) 0px, black 44px, black calc(100% - 44px), var(--fr) 100%);
       mask-image: linear-gradient(to right, var(--fl) 0px, black 44px, black calc(100% - 44px), var(--fr) 100%);
     }
-    #jump, #sub {
-      display: flex; flex-wrap: nowrap;
+    #jump {
+      display: flex; align-items: center; flex-wrap: nowrap; gap: 10px;
       overflow-x: auto; -webkit-overflow-scrolling: touch;
-      scrollbar-width: none; scroll-behavior: smooth;
+      scrollbar-width: none; padding: 4px 6px 12px; scroll-behavior: smooth;
     }
-    #jump { gap: 11px; padding: 4px 6px 12px; }
-    #sub  { gap: 6px;  padding: 3px 6px 4px; }
-    #jump::-webkit-scrollbar, #sub::-webkit-scrollbar { display: none; }
+    #jump::-webkit-scrollbar { display: none; }
+
+    /* 章グループ（ボタン＋インライン展開） */
+    .chap-group { display: inline-flex; align-items: center; flex-shrink: 0; }
+    .chap-expand {
+      overflow: hidden; width: 0;
+      /* transition は JS で設定 */
+    }
+    .chap-stories-inner { display: flex; gap: 6px; padding: 0 4px 0 8px; }
 
     /* 章ボタン */
     .jb {
@@ -282,24 +287,25 @@
     .jb:active { transform: scale(.94); }
     .jb.on { background: rgba(201,168,76,.22); border-color: rgba(201,168,76,.5); color: #e8d49a; }
 
-    /* 閉じた章はボタンが重なった見た目（中にストーリーが積まれている） */
+    /* 閉じた章：3枚重なりの見た目（等間隔・不透過） */
+    .jb.stacked { background: #201510; z-index: 0; }
     .jb.stacked::before, .jb.stacked::after {
       content: ''; position: absolute; inset: 0; border-radius: inherit;
-      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.13);
-      z-index: -1; transition: transform .24s ease, opacity .24s ease;
+      transition: transform .24s ease, opacity .24s ease;
     }
-    .jb.stacked::before { transform: translate(3px, 3px); }
-    .jb.stacked::after  { transform: translate(6px, 6px); opacity: .6; }
-    /* 展開中の章は重なりが開いて、アクセントが付く */
+    .jb.stacked::before {
+      background: #1a1009; border: 1px solid rgba(255,255,255,.11);
+      z-index: -1; transform: translate(5px, 4px);
+    }
+    .jb.stacked::after {
+      background: #120c06; border: 1px solid rgba(255,255,255,.08);
+      z-index: -2; transform: translate(10px, 8px);
+    }
+    /* 展開中：重なりを閉じてアクセントを付ける */
     .jb.expanded { background: rgba(201,168,76,.26); border-color: rgba(201,168,76,.62); color: #f0dca8; }
     .jb.expanded::before, .jb.expanded::after { transform: translate(0,0); opacity: 0; }
 
-    /* 展開されるストーリースライダー */
-    #sub-wrap {
-      max-height: 0; opacity: 0; margin-top: 0;
-      transition: max-height .3s ease, opacity .26s ease, margin-top .3s ease;
-    }
-    #sub-wrap.open { max-height: 46px; opacity: 1; margin-top: 7px; }
+    /* ストーリーボタン */
     .sb {
       font: inherit; font-size: 10px; padding: 4px 12px; border-radius: 12px;
       background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.11);
@@ -352,10 +358,7 @@
     <div id="dots"></div>
     <button class="nb" id="bnn" onclick="go(1)" aria-label="次のページ">›</button>
   </div>
-  <div id="nav-jump">
-    <div id="jump-wrap"><div id="jump"></div></div>
-    <div id="sub-wrap"><div id="sub"></div></div>
-  </div>
+  <div id="jump-wrap"><div id="jump"></div></div>
 </div>
 
 <!-- ── Episode scripts ─────────────────────────────
@@ -374,8 +377,6 @@ let   pg2     = document.getElementById('pg2');
 const dotsEl  = document.getElementById('dots');
 const jumpEl  = document.getElementById('jump');
 const jumpWrap= document.getElementById('jump-wrap');
-const subWrap = document.getElementById('sub-wrap');
-const subEl   = document.getElementById('sub');
 const epSelEl = document.getElementById('ep-sel');
 const bnp     = document.getElementById('bnp');
 const bnn     = document.getElementById('bnn');
@@ -727,7 +728,6 @@ function ui() {
   dotsEl.innerHTML = dh;
   updateJumpStates();
   scrollJumpToActiveChapter();
-  if (openChap !== null) scrollSubToActive();
 }
 
 function navigate(target, dir) {
@@ -771,9 +771,9 @@ function jump(si) {
 }
 window.jump = jump;
 
-// ─── Two-level chapter navigation ─────────────
-// Group sub-sections (第X章の１…) under one chapter (第X章) button;
-// 表紙 / 奥付 stay as standalone single buttons.
+// ─── Two-level inline chapter navigation ──────
+// 第X章の１… をまとめて 第X章 ボタン1つに集約。
+// 章ボタン押下でストーリーボタンが同一行に横スライド展開。
 function buildGroups() {
   GROUPS = [];
   SECTIONS.forEach((s, si) => {
@@ -794,55 +794,83 @@ function buildGroups() {
 function buildJump() {
   buildGroups();
   jumpEl.innerHTML = GROUPS.map((g, gi) => {
-    if (g.single)
-      return `<button class="jb single" onclick="jumpSingle(${gi})">${g.name}</button>`;
+    if (g.single) {
+      return `<button class="jb single" data-gi="${gi}" onclick="jumpSingle(${gi})">${g.name}</button>`;
+    }
     const stk = g.secs.length > 1 ? ' stacked' : '';
-    return `<button class="jb chap${stk}" onclick="toggleChap(${gi})">${g.name}</button>`;
+    const stories = g.secs.map(si =>
+      `<button class="sb" onclick="jump(${si})">${SECTIONS[si].label}</button>`
+    ).join('');
+    return (
+      `<div class="chap-group">` +
+        `<button class="jb chap${stk}" data-gi="${gi}" onclick="toggleChap(${gi})">${g.name}</button>` +
+        `<div class="chap-expand" id="chap-exp-${gi}" style="width:0;overflow:hidden">` +
+          `<div class="chap-stories-inner">${stories}</div>` +
+        `</div>` +
+      `</div>`
+    );
   }).join('');
   if (openChap !== null && (!GROUPS[openChap] || GROUPS[openChap].single)) openChap = null;
-  renderSub();
+  updateExpansions(false);
   requestAnimationFrame(() => updateFade(jumpWrap, jumpEl));
 }
 
-// expand / collapse a chapter's story slider (toggle on re-press)
+// 章ボタン押下：展開トグル
 window.toggleChap = function (gi) {
   openChap = (openChap === gi) ? null : gi;
-  renderSub();
+  updateExpansions(true);
 };
 
-// 表紙 / 奥付 — jump straight there and close any open chapter
+// 表紙 / 奥付：直接ジャンプして展開を閉じる
 window.jumpSingle = function (gi) {
   openChap = null;
-  renderSub();
+  updateExpansions(false);
   jump(GROUPS[gi].secs[0]);
 };
 
-function renderSub() {
-  if (openChap === null || !GROUPS[openChap] || GROUPS[openChap].single) {
-    subWrap.classList.remove('open');
-    subEl.innerHTML = '';
-    updateJumpStates();
-    return;
-  }
-  const g = GROUPS[openChap];
-  subEl.innerHTML = g.secs.map(si =>
-    `<button class="sb" onclick="jump(${si})">${SECTIONS[si].label}</button>`
-  ).join('');
-  subWrap.classList.add('open');
+// 展開幅を測定（フラッシュなし）
+function getExpandedWidth(el) {
+  el.style.transition = 'none';
+  const prev = el.style.width;
+  el.style.width = 'auto';
+  const w = el.scrollWidth;
+  el.style.width = prev;
+  el.offsetWidth;  // force reflow before next paint
+  return w + 12;
+}
+
+// インライン横スライド展開
+function updateExpansions(animate) {
+  GROUPS.forEach((g, gi) => {
+    if (g.single) return;
+    const el = document.getElementById(`chap-exp-${gi}`);
+    if (!el) return;
+    if (openChap === gi) {
+      const w = getExpandedWidth(el);
+      el.style.transition = animate ? 'width .36s cubic-bezier(0,0,.35,1)' : 'none';
+      el.style.width = w + 'px';
+    } else {
+      el.style.transition = animate ? 'width .22s cubic-bezier(.65,0,1,1)' : 'none';
+      el.style.width = '0';
+    }
+  });
   updateJumpStates();
-  requestAnimationFrame(() => { updateFade(subWrap, subEl); scrollSubToActive(); });
+  if (animate && openChap !== null) setTimeout(scrollJumpToActiveChapter, 60);
 }
 
 function updateJumpStates() {
   const si = SECTIONS.indexOf(sectionOf(cur));
-  [...jumpEl.children].forEach((b, gi) => {
+  jumpEl.querySelectorAll('.jb[data-gi]').forEach(b => {
+    const gi = parseInt(b.dataset.gi);
     const g = GROUPS[gi];
+    if (!g) return;
     b.classList.toggle('on', g.secs.includes(si));
     b.classList.toggle('expanded', gi === openChap && !g.single);
   });
   if (openChap !== null && GROUPS[openChap] && !GROUPS[openChap].single) {
     const secs = GROUPS[openChap].secs;
-    [...subEl.children].forEach((b, k) => b.classList.toggle('on', secs[k] === si));
+    const expEl = document.getElementById(`chap-exp-${openChap}`);
+    if (expEl) expEl.querySelectorAll('.sb').forEach((b, k) => b.classList.toggle('on', secs[k] === si));
   }
 }
 
@@ -869,22 +897,17 @@ function scrollIntoViewX(sc, btn) {
 function scrollJumpToActiveChapter() {
   const si = SECTIONS.indexOf(sectionOf(cur));
   const gi = GROUPS.findIndex(g => g.secs.includes(si));
-  if (gi >= 0) scrollIntoViewX(jumpEl, jumpEl.children[gi]);
+  if (gi < 0) return;
+  const btn = jumpEl.querySelector(`.jb[data-gi="${gi}"]`);
+  const el  = btn?.closest('.chap-group') || btn;
+  if (el) scrollIntoViewX(jumpEl, el);
   updateFade(jumpWrap, jumpEl);
-}
-
-function scrollSubToActive() {
-  if (openChap === null || !GROUPS[openChap]) return;
-  const si = SECTIONS.indexOf(sectionOf(cur));
-  const k = GROUPS[openChap].secs.indexOf(si);
-  if (k >= 0) scrollIntoViewX(subEl, subEl.children[k]);
 }
 
 // ─── Input ────────────────────────────────────
 document.getElementById('tzl').addEventListener('click', () => go(-1));
 document.getElementById('tzr').addEventListener('click', () => go(1));
 jumpEl.addEventListener('scroll', () => updateFade(jumpWrap, jumpEl), { passive: true });
-subEl.addEventListener('scroll', () => updateFade(subWrap, subEl), { passive: true });
 
 let sx = 0, sy = 0;
 pw.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
