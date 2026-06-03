@@ -182,6 +182,8 @@
     .col-text p { margin: 0; }
 
     .scene-brk { color: #8a7055; opacity: 0.65; letter-spacing: 0.3em; }
+    .t-brk .pbody { writing-mode: horizontal-tb; display: flex; align-items: center; justify-content: center; }
+    .t-brk .scene-brk { font-size: min(4.2vw, 16px); opacity: 0.55; }
     .math-inline {
       display: inline-block; writing-mode: horizontal-tb;
       font-style: italic; font-size: .88em; vertical-align: middle;
@@ -295,11 +297,11 @@
     }
     .jb.stacked::before {
       background: #1a1009; border: 1px solid rgba(255,255,255,.11);
-      z-index: -1; transform: translate(5px, 4px);
+      z-index: -1; transform: translate(6px, 0);
     }
     .jb.stacked::after {
       background: #120c06; border: 1px solid rgba(255,255,255,.08);
-      z-index: -2; transform: translate(10px, 8px);
+      z-index: -2; transform: translate(12px, 0);
     }
     /* 展開中：重なりを閉じてアクセントを付ける */
     .jb.expanded { background: rgba(201,168,76,.26); border-color: rgba(201,168,76,.62); color: #f0dca8; }
@@ -625,9 +627,16 @@ function build() {
     const start = PAGES.length;
     const lb = `${ch.num}　${ch.ti}`;
     pn++; PAGES.push({ t: 'ch', ch: ch.num, ti: ch.ti, lb, pn });
-    for (const ps of paginate(ch.paras, mb)) {
-      pn++; PAGES.push({ t: 'tx', ps, lb, pn });
+    let seg = [];
+    for (const para of ch.paras) {
+      if (para.includes('scene-brk')) {
+        if (seg.length) { for (const ps of paginate(seg, mb)) { pn++; PAGES.push({ t: 'tx', ps, lb, pn }); } seg = []; }
+        PAGES.push({ t: 'brk', lb, slot: 'center' });
+      } else {
+        seg.push(para);
+      }
     }
+    if (seg.length) { for (const ps of paginate(seg, mb)) { pn++; PAGES.push({ t: 'tx', ps, lb, pn }); } }
     SECTIONS.push({ label: ch.num, start, end: PAGES.length - 1 });
   }
 
@@ -678,6 +687,13 @@ function render(el, i) {
       <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
       <div class="pbody">${d.ps.map(p => `<p>${p}</p>`).join('')}</div>
       <div class="pftr"><span class="pnum">${d.pn}</span></div>`;
+
+  } else if (d.t === 'brk') {
+    el.innerHTML = `
+      <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
+      <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
+      <div class="pbody"><span class="scene-brk">◇　◇　◇</span></div>
+      <div class="pftr"></div>`;
 
   } else {
     const y = new Date().getFullYear();
@@ -855,7 +871,7 @@ function updateExpansions(animate) {
     }
   });
   updateJumpStates();
-  if (animate && openChap !== null) setTimeout(scrollJumpToActiveChapter, 60);
+  if (animate && openChap !== null) setTimeout(() => scrollToChapBtn(openChap), 60);
 }
 
 function updateJumpStates() {
@@ -864,7 +880,7 @@ function updateJumpStates() {
     const gi = parseInt(b.dataset.gi);
     const g = GROUPS[gi];
     if (!g) return;
-    b.classList.toggle('on', g.secs.includes(si));
+    b.classList.toggle('on', g.secs.includes(si) && openChap !== gi);
     b.classList.toggle('expanded', gi === openChap && !g.single);
   });
   if (openChap !== null && GROUPS[openChap] && !GROUPS[openChap].single) {
@@ -894,14 +910,30 @@ function scrollIntoViewX(sc, btn) {
   sc.style.scrollBehavior = '';
 }
 
+function scrollToChapBtn(gi) {
+  const btn = jumpEl.querySelector(`.jb[data-gi="${gi}"]`);
+  if (btn) scrollIntoViewX(jumpEl, btn);
+  updateFade(jumpWrap, jumpEl);
+}
+
 function scrollJumpToActiveChapter() {
   const si = SECTIONS.indexOf(sectionOf(cur));
   const gi = GROUPS.findIndex(g => g.secs.includes(si));
   if (gi < 0) return;
-  const btn = jumpEl.querySelector(`.jb[data-gi="${gi}"]`);
-  const el  = btn?.closest('.chap-group') || btn;
-  if (el) scrollIntoViewX(jumpEl, el);
-  updateFade(jumpWrap, jumpEl);
+  if (openChap === gi) {
+    // Group is expanded — scroll to show the active story button
+    const expEl = document.getElementById(`chap-exp-${gi}`);
+    if (expEl) {
+      const k = GROUPS[gi].secs.indexOf(si);
+      const sbBtns = expEl.querySelectorAll('.sb');
+      if (k >= 0 && sbBtns[k]) {
+        scrollIntoViewX(jumpEl, sbBtns[k]);
+        updateFade(jumpWrap, jumpEl);
+        return;
+      }
+    }
+  }
+  scrollToChapBtn(gi);
 }
 
 // ─── Input ────────────────────────────────────
