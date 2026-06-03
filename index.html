@@ -191,37 +191,24 @@
     }
 
     /* ── Scene backgrounds ──────────────────────────── */
+    /* The body background is set dynamically (inline) per section by the
+       effect engine; the gradients live in each chapter's effect.js. */
     body { transition: background 2.5s ease; }
-    body.bg-spring {
-      /* spring blue sky */
-      background: #09192e;
-      background-image:
-        radial-gradient(ellipse at 50% 5%, rgba(120,185,240,.24) 0%, transparent 48%),
-        radial-gradient(ellipse at 50% 50%, #162e4a 0%, #0a1c2e 55%, #050f18 100%);
+
+    /* ── Illustration page (挿絵) ─────────────────────── */
+    .t-img .pbody {
+      writing-mode: horizontal-tb;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; padding: 14px 10px;
     }
-    body.bg-library {
-      /* warm wooden library, afternoon light from window */
-      background: #180e04;
-      background-image:
-        repeating-linear-gradient(0deg, transparent 0, transparent 59px,
-          rgba(210,150,70,.04) 59px, rgba(210,150,70,.04) 60px),
-        radial-gradient(ellipse at 74% 22%, rgba(255,200,90,.16) 0%, transparent 48%),
-        radial-gradient(ellipse at 50% 55%, #321c0a 0%, #200e06 62%, #110804 100%);
+    .illus-img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain; border-radius: 3px;
+      box-shadow: 0 6px 22px rgba(0,0,0,.45);
     }
-    body.bg-notebook {
-      /* dark notebook / study — cool slate */
-      background: #101420;
-      background-image:
-        repeating-linear-gradient(0deg, transparent 0, transparent 27px,
-          rgba(190,200,245,.046) 27px, rgba(190,200,245,.046) 28px),
-        radial-gradient(ellipse at 50% 50%, #191c2a 0%, #0d1018 65%, #080910 100%);
-    }
-    body.bg-night {
-      /* dusk into night sky */
-      background: #04030e;
-      background-image:
-        radial-gradient(ellipse at 50% 100%, rgba(120,60,15,.65) 0%, rgba(75,28,6,.2) 30%, transparent 58%),
-        radial-gradient(ellipse at 50% 50%, #0b081e 0%, #060416 60%, #030210 100%);
+    .illus-cap {
+      font-size: min(3vw, 12px); color: #8a7055;
+      letter-spacing: .08em; line-height: 1.6; text-align: center;
     }
 
     /* ── Slide animations ────────────────────────── */
@@ -363,14 +350,67 @@
   <div id="jump-wrap"><div id="jump"></div></div>
 </div>
 
-<!-- ── Episode scripts ─────────────────────────────
-     Add one <script> per episode folder here.
-     Each script pushes its data into window.EPISODE_REGISTRY.
+<!-- ── Episode data ────────────────────────────────
+     manifest.js lists which episodes/chapters to load. The engine below
+     reads it and dynamically injects each episode.js / chapter.js /
+     effect.js. To add a chapter: create its folder and add its id to
+     the manifest — no edits needed here.
 ─────────────────────────────────────────────────── -->
-<script src="episodes/ep01/story.js"></script>
+<script src="episodes/manifest.js"></script>
 
 <script>
-window.EPISODE_REGISTRY = window.EPISODE_REGISTRY || [];
+window.EPISODE_REGISTRY = [];
+
+// ─── Content registries (populated by the dynamically-loaded data files)
+const EPISODES = {};         // id            → { label, book }
+const CHAPTERS_DATA = {};    // "epId/chId"   → { sections: [...] }
+const EFFECTS = {};          // effect name   → { bg, step, draw }
+window.registerEpisode = (id, data) => { EPISODES[id] = data; };
+window.registerChapter = (epId, chId, data) => { CHAPTERS_DATA[epId + '/' + chId] = data; };
+window.registerEffect  = (name, def) => { EFFECTS[name] = def; };
+
+// ─── Dynamic loader ───────────────────────────
+// Inject a <script> (works on file:// too, unlike fetch). Resolves even on
+// 404 so an optional effect.js can simply be absent.
+function loadScript(src) {
+  return new Promise(res => {
+    const s = document.createElement('script');
+    s.src = src; s.async = false;
+    s.onload = () => res(true);
+    s.onerror = () => res(false);
+    document.head.appendChild(s);
+  });
+}
+
+async function loadAllData() {
+  const man = window.EPISODE_MANIFEST || [];
+  for (const epm of man) {
+    await loadScript(`episodes/${epm.id}/episode.js`);
+    for (const c of epm.chapters) {
+      const chId = (typeof c === 'string') ? c : c.id;
+      if (typeof c === 'object' && c.fx) await loadScript(`episodes/${epm.id}/${chId}/effect.js`);
+      await loadScript(`episodes/${epm.id}/${chId}/chapter.js`);
+    }
+  }
+}
+
+// Flatten registered episodes/chapters into the runtime EPISODE_REGISTRY,
+// tagging each section with its chapter folder (for img/ resolution).
+function assembleRegistry() {
+  const man = window.EPISODE_MANIFEST || [];
+  window.EPISODE_REGISTRY = man.map(epm => {
+    const ep = EPISODES[epm.id] || { label: epm.id, book: {} };
+    const chapters = [];
+    for (const c of epm.chapters) {
+      const chId = (typeof c === 'string') ? c : c.id;
+      const data = CHAPTERS_DATA[epm.id + '/' + chId];
+      if (!data) continue;
+      const base = `episodes/${epm.id}/${chId}/`;
+      for (const sec of data.sections) { sec._base = base; chapters.push(sec); }
+    }
+    return { id: epm.id, label: ep.label, book: ep.book, chapters };
+  });
+}
 
 // ─── Element refs & state ─────────────────────
 const pw      = document.getElementById('pw');
@@ -387,103 +427,12 @@ let BOOK = {}, CHAPTERS = [];
 let PAGES = [], SECTIONS = [], GROUPS = [];
 let cur = 0, busy = false, booted = false, currentEpIdx = 0, openChap = null;
 
-// ─── Particle / atmosphere effects ───────────
+// ─── Particle / atmosphere engine ────────────
+// Generic plumbing only. Concrete effects (sakura, rays, …) are registered
+// from each chapter's effect.js via registerEffect(name, { bg, step, draw }).
 const sakura = document.getElementById('sakura');
 const sCtx   = sakura.getContext('2d');
-let particles = [], effectMode = 'none', effectRaf = 0, effectActive = false, effectTime = 0;
-
-// ── Sakura petals (ch1 spring) ────────────────
-function spawnPetal() {
-  return {
-    x: Math.random() * window.innerWidth, y: -10,
-    r: 3 + Math.random() * 3.5,
-    vy: 0.5 + Math.random() * 1.1, vx: (Math.random() - 0.5) * 0.4,
-    angle: Math.random() * Math.PI * 2, va: (Math.random() - 0.5) * 0.035,
-    alpha: 0.45 + Math.random() * 0.35,
-  };
-}
-function drawPetal(p) {
-  sCtx.save();
-  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
-  sCtx.globalAlpha = p.alpha; sCtx.fillStyle = '#f8b8cc';
-  sCtx.beginPath(); sCtx.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2); sCtx.fill();
-  sCtx.globalAlpha = p.alpha * 0.45; sCtx.fillStyle = '#fff5f8';
-  sCtx.beginPath(); sCtx.ellipse(0, 0, p.r * 0.45, p.r * 0.28, 0, 0, Math.PI * 2); sCtx.fill();
-  sCtx.restore();
-}
-
-// ── Light rays (ch2 library, window shimmer) ──
-function spawnRay() {
-  const W = window.innerWidth;
-  return {
-    x: W * (0.2 + Math.random() * 0.6), y: 0,
-    width: 18 + Math.random() * 28,
-    baseAlpha: 0.028 + Math.random() * 0.04,
-    angle: Math.PI * 0.22 + (Math.random() - 0.5) * 0.18,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.0015 + Math.random() * 0.0025,
-    life: 0, maxLife: 500 + Math.random() * 400,
-  };
-}
-function drawRay(p, t) {
-  const fade = Math.min(p.life / 120, 1) * Math.min((p.maxLife - p.life) / 120, 1);
-  const shimmer = 0.65 + 0.35 * Math.sin(t * p.speed + p.phase);
-  sCtx.save();
-  sCtx.globalAlpha = p.baseAlpha * fade * shimmer;
-  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
-  const H = window.innerHeight * 1.6;
-  const g = sCtx.createLinearGradient(-p.width / 2, 0, p.width / 2, 0);
-  g.addColorStop(0, 'transparent'); g.addColorStop(0.5, '#ffc870'); g.addColorStop(1, 'transparent');
-  sCtx.fillStyle = g;
-  sCtx.fillRect(-p.width / 2, 0, p.width, H);
-  sCtx.restore();
-}
-
-// ── Pencil strokes (ch3 notebook, fading lines) ─
-function spawnStroke() {
-  const W = window.innerWidth, H = window.innerHeight;
-  return {
-    x: Math.random() * W, y: 40 + Math.random() * (H - 80),
-    len: 25 + Math.random() * 70,
-    angle: (Math.random() - 0.5) * 0.09,
-    maxAlpha: 0.07 + Math.random() * 0.1,
-    life: 0, maxLife: 160 + Math.random() * 140,
-  };
-}
-function drawStroke(p) {
-  const fadeIn = Math.min(p.life / 25, 1);
-  const fadeOut = Math.min((p.maxLife - p.life) / 55, 1);
-  sCtx.save();
-  sCtx.globalAlpha = p.maxAlpha * fadeIn * fadeOut;
-  sCtx.strokeStyle = '#9090a0';
-  sCtx.lineWidth = 0.7 + Math.random() * 0.5;
-  sCtx.lineCap = 'round';
-  sCtx.translate(p.x, p.y); sCtx.rotate(p.angle);
-  sCtx.beginPath(); sCtx.moveTo(-p.len / 2, 0); sCtx.lineTo(p.len / 2, 0);
-  sCtx.stroke();
-  sCtx.restore();
-}
-
-// ── Stars (ch4 night sky, twinkling) ─────────
-function spawnStar() {
-  return {
-    x: Math.random() * window.innerWidth,
-    y: Math.random() * window.innerHeight,
-    r: 0.4 + Math.random() * 1.3,
-    base: 0.35 + Math.random() * 0.55,
-    phase: Math.random() * Math.PI * 2,
-    freq: 0.007 + Math.random() * 0.018,
-    warm: Math.random() > 0.78,
-  };
-}
-function drawStar(p, t) {
-  const a = p.base * (0.45 + 0.55 * Math.sin(t * p.freq + p.phase));
-  sCtx.save();
-  sCtx.globalAlpha = a;
-  sCtx.fillStyle = p.warm ? '#ffd8a0' : '#e8eeff';
-  sCtx.beginPath(); sCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2); sCtx.fill();
-  sCtx.restore();
-}
+let particles = [], curEffect = null, effectRaf = 0, effectActive = false, effectTime = 0;
 
 function effectLoop() {
   if (!effectActive) return;
@@ -491,44 +440,29 @@ function effectLoop() {
   const W = sakura.width, H = sakura.height;
   sCtx.clearRect(0, 0, W, H);
 
-  if (effectMode === 'sakura') {
-    if (particles.length < 14 && Math.random() < 0.12) particles.push(spawnPetal());
-    particles = particles.filter(p => p.y < H + 20);
-    particles.forEach(p => {
-      p.y += p.vy; p.x += p.vx + Math.sin(p.y * 0.012 + p.r) * 0.35; p.angle += p.va;
-    });
-  } else if (effectMode === 'rays') {
-    if (particles.length < 5 && Math.random() < 0.007) particles.push(spawnRay());
-    particles = particles.filter(p => p.life < p.maxLife);
-    particles.forEach(p => p.life++);
-  } else if (effectMode === 'strokes') {
-    if (particles.length < 9 && Math.random() < 0.045) particles.push(spawnStroke());
-    particles = particles.filter(p => p.life < p.maxLife);
-    particles.forEach(p => p.life++);
-  } else if (effectMode === 'stars') {
-    while (particles.length < 55) particles.push(spawnStar());
-  }
+  const e = curEffect;
+  if (e) {
+    const env = { W, H, t: effectTime };
+    particles = e.step(particles, env) || particles;
 
-  const r = pw.getBoundingClientRect();
-  sCtx.save();
-  sCtx.beginPath();
-  sCtx.rect(0, 0, W, H);
-  sCtx.rect(r.left, r.top, r.width, r.height);
-  sCtx.clip('evenodd');
-  if      (effectMode === 'sakura')  particles.forEach(drawPetal);
-  else if (effectMode === 'rays')    particles.forEach(p => drawRay(p, effectTime));
-  else if (effectMode === 'strokes') particles.forEach(drawStroke);
-  else if (effectMode === 'stars')   particles.forEach(p => drawStar(p, effectTime));
-  sCtx.restore();
+    const r = pw.getBoundingClientRect();
+    sCtx.save();
+    sCtx.beginPath();
+    sCtx.rect(0, 0, W, H);
+    sCtx.rect(r.left, r.top, r.width, r.height);
+    sCtx.clip('evenodd');
+    particles.forEach(p => e.draw(sCtx, p, env));
+    sCtx.restore();
+  }
 
   effectRaf = requestAnimationFrame(effectLoop);
 }
 
-function setEffect(mode) {
+function setEffect(def) {
   const wasActive = effectActive;
-  effectMode = mode;
+  curEffect = def || null;
   particles = [];
-  if (mode !== 'none') {
+  if (curEffect) {
     if (!wasActive) {
       effectActive = true;
       sakura.width  = window.innerWidth;
@@ -549,30 +483,23 @@ function setEffect(mode) {
   }
 }
 
-function setBackground(cls) {
-  document.body.classList.remove('bg-spring', 'bg-library', 'bg-notebook', 'bg-night');
-  if (cls) document.body.classList.add('bg-' + cls);
+function setBackground(bg) {
+  document.body.style.background = bg || '';
+}
+
+// Apply the scene (background + particles) for a named effect, or clear it.
+function setScene(name) {
+  const def = name ? EFFECTS[name] : null;
+  setBackground(def ? def.bg : null);
+  setEffect(def || null);
 }
 
 function updateEffects() {
   if (!PAGES.length) return;
-  const d   = PAGES[cur];
+  const d = PAGES[cur];
+  if (d.t === 'cover' || d.t === 'col') { setScene(null); return; }
   const sec = sectionOf(cur);
-  const lbl = sec ? sec.label : '';
-
-  if (d.t === 'cover' || d.t === 'col' || lbl === '表紙' || lbl === '奥付') {
-    setEffect('none'); setBackground(null);
-  } else if (lbl === '第一章の１') {
-    setEffect('sakura'); setBackground('spring');
-  } else if (lbl === '第一章の２') {
-    setEffect('rays'); setBackground('library');
-  } else if (lbl === '第一章の３') {
-    setEffect('strokes'); setBackground('notebook');
-  } else if (lbl === '第一章の４') {
-    setEffect('stars'); setBackground('night');
-  } else {
-    setEffect('none'); setBackground(null);
-  }
+  setScene(sec ? sec.effect : null);
 }
 
 // ─── Auto-pagination ──────────────────────────
@@ -628,16 +555,24 @@ function build() {
     const lb = `${ch.num}　${ch.ti}`;
     pn++; PAGES.push({ t: 'ch', ch: ch.num, ti: ch.ti, lb, pn });
     let seg = [];
+    const flush = () => {
+      if (!seg.length) return;
+      for (const ps of paginate(seg, mb)) { pn++; PAGES.push({ t: 'tx', ps, lb, pn }); }
+      seg = [];
+    };
     for (const para of ch.paras) {
-      if (para.includes('scene-brk')) {
-        if (seg.length) { for (const ps of paginate(seg, mb)) { pn++; PAGES.push({ t: 'tx', ps, lb, pn }); } seg = []; }
+      if (para && typeof para === 'object' && para.img) {
+        flush();
+        pn++; PAGES.push({ t: 'img', src: (ch._base || '') + 'img/' + para.img, cap: para.cap || '', lb, pn, slot: 'center' });
+      } else if (para.includes('scene-brk')) {
+        flush();
         PAGES.push({ t: 'brk', lb, slot: 'center' });
       } else {
         seg.push(para);
       }
     }
-    if (seg.length) { for (const ps of paginate(seg, mb)) { pn++; PAGES.push({ t: 'tx', ps, lb, pn }); } }
-    SECTIONS.push({ label: ch.num, start, end: PAGES.length - 1 });
+    flush();
+    SECTIONS.push({ label: ch.num, start, end: PAGES.length - 1, effect: ch.effect || null });
   }
 
   const ci = PAGES.length;
@@ -694,6 +629,16 @@ function render(el, i) {
       <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
       <div class="pbody"><span class="scene-brk">◇　◇　◇</span></div>
       <div class="pftr"></div>`;
+
+  } else if (d.t === 'img') {
+    el.innerHTML = `
+      <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
+      <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
+      <div class="pbody illus">
+        <img class="illus-img" src="${d.src}" alt="${d.cap}" loading="lazy">
+        ${d.cap ? `<span class="illus-cap">${d.cap}</span>` : ''}
+      </div>
+      <div class="pftr"><span class="pnum">${d.pn}</span></div>`;
 
   } else {
     const y = new Date().getFullYear();
@@ -963,10 +908,15 @@ function boot() {
   loadEpisode(0);
 }
 
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(boot);
-  setTimeout(boot, 1500);
-} else { boot(); }
+// Load all episode/chapter data, assemble the registry, then boot
+// (font-gated, as before, so the first paginate() measures the real font).
+loadAllData().then(() => {
+  assembleRegistry();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(boot);
+    setTimeout(boot, 1500);
+  } else { boot(); }
+});
 
 let rz;
 window.addEventListener('resize', () => {
