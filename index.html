@@ -317,6 +317,65 @@
     }
     .epb:hover { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
     .epb.on { background: rgba(100,160,220,.18); border-color: rgba(100,160,220,.45); color: #a8c8e8; }
+    .epb.back { font-size: 11px; color: rgba(255,255,255,.6); }
+    .epb.back:hover { color: #fff; }
+
+    /* ── Bookshelf (library) ─────────────────────── */
+    #shelf {
+      display: none; position: fixed; inset: 0; z-index: 40;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: max(28px, env(safe-area-inset-top)) 16px 40px;
+    }
+    #shelf.visible { display: block; }
+    #shelf-head { text-align: center; margin: 8px 0 26px; }
+    #shelf-title {
+      font-size: min(7vw, 28px); font-weight: 700; color: #f0e6d2;
+      letter-spacing: .3em; text-shadow: 0 2px 14px rgba(0,0,0,.6);
+    }
+    #shelf-sub {
+      margin-top: 8px; font-size: min(3vw, 11px);
+      color: rgba(240,230,210,.5); letter-spacing: .18em;
+    }
+    #shelf-rack {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      align-content: flex-start; column-gap: 16px; row-gap: 34px;
+      max-width: 560px; margin: 0 auto; padding-bottom: 34px;
+      /* wooden ledge drawn under each 190px row (pitch = 190 + 34) */
+      background-image: repeating-linear-gradient(to bottom,
+        transparent 0, transparent 190px,
+        rgba(70,42,22,.0) 190px, rgba(70,42,22,.9) 193px,
+        rgba(40,24,12,.95) 205px, rgba(20,11,5,.6) 209px,
+        transparent 213px, transparent 224px);
+    }
+    .spine {
+      position: relative; width: 50px; height: 190px;
+      border-radius: 2px 4px 4px 2px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 3px 4px 10px rgba(0,0,0,.55), inset -3px 0 6px rgba(0,0,0,.35),
+                  inset 2px 0 2px rgba(255,255,255,.10);
+      transition: transform .22s cubic-bezier(0,0,.3,1), box-shadow .22s;
+      touch-action: manipulation; overflow: hidden;
+    }
+    .spine::before { /* head/tail band */
+      content: ''; position: absolute; left: 0; right: 0; top: 14px;
+      height: 1px; background: rgba(255,255,255,.18);
+      box-shadow: 0 162px 0 rgba(255,255,255,.18);
+    }
+    .spine:hover, .spine:focus { transform: translateY(-8px); box-shadow: 4px 10px 18px rgba(0,0,0,.6); }
+    .spine.opening { transform: translateY(-14px) scale(1.06); }
+    .spine-title {
+      writing-mode: vertical-rl; text-orientation: mixed;
+      font-size: 15px; font-weight: 700; letter-spacing: .1em;
+      line-height: 1.05; max-height: 150px; overflow: hidden;
+      text-shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+    .spine-author {
+      position: absolute; bottom: 9px; left: 0; right: 0;
+      writing-mode: vertical-rl; margin: 0 auto; height: 40px;
+      font-size: 8.5px; letter-spacing: .08em; opacity: .72; overflow: hidden;
+    }
+    #shelf, #scene { transition: opacity .3s ease; }
+    .fade-out { opacity: 0; }
 
     /* ── Swipe hint ──────────────────────────────── */
     #hint {
@@ -333,7 +392,16 @@
 <!-- Cherry blossom canvas — pointer-events:none so taps pass through -->
 <canvas id="sakura" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:150;opacity:0;transition:opacity 1.5s ease;"></canvas>
 
-<div id="scene">
+<!-- Bookshelf / library landing -->
+<div id="shelf">
+  <div id="shelf-head">
+    <div id="shelf-title">本棚</div>
+    <div id="shelf-sub">読みたい本を選んでください</div>
+  </div>
+  <div id="shelf-rack"></div>
+</div>
+
+<div id="scene" style="display:none">
   <div id="ep-sel"></div>
   <div id="pw">
     <div id="pg2" class="page" style="display:none"></div>
@@ -382,34 +450,43 @@ function loadScript(src) {
   });
 }
 
-async function loadAllData() {
+// Two-tier loading: at boot only the lightweight episode.js (book metadata)
+// is loaded so the shelf renders instantly; a book's chapters/effects are
+// fetched on demand the first time it is opened.
+async function loadAllMeta() {
   const man = window.EPISODE_MANIFEST || [];
-  for (const epm of man) {
-    await loadScript(`episodes/${epm.id}/episode.js`);
-    for (const c of epm.chapters) {
-      const chId = (typeof c === 'string') ? c : c.id;
-      if (typeof c === 'object' && c.fx) await loadScript(`episodes/${epm.id}/${chId}/effect.js`);
-      await loadScript(`episodes/${epm.id}/${chId}/chapter.js`);
-    }
-  }
+  for (const epm of man) await loadScript(`episodes/${epm.id}/episode.js`);
 }
 
-// Flatten registered episodes/chapters into the runtime EPISODE_REGISTRY,
-// tagging each section with its chapter folder (for img/ resolution).
-function assembleRegistry() {
+// Build the registry from metadata only — chapters filled in lazily.
+function buildRegistry() {
   const man = window.EPISODE_MANIFEST || [];
   window.EPISODE_REGISTRY = man.map(epm => {
     const ep = EPISODES[epm.id] || { label: epm.id, book: {} };
-    const chapters = [];
-    for (const c of epm.chapters) {
-      const chId = (typeof c === 'string') ? c : c.id;
-      const data = CHAPTERS_DATA[epm.id + '/' + chId];
-      if (!data) continue;
-      const base = `episodes/${epm.id}/${chId}/`;
-      for (const sec of data.sections) { sec._base = base; chapters.push(sec); }
-    }
-    return { id: epm.id, label: ep.label, book: ep.book, chapters };
+    return { id: epm.id, label: ep.label, book: ep.book, manifest: epm, chapters: [], loaded: false };
   });
+}
+
+// Load + assemble one episode's chapters on demand (idempotent).
+async function ensureEpisodeLoaded(idx) {
+  const ep = window.EPISODE_REGISTRY[idx];
+  if (!ep || ep.loaded) return;
+  const epm = ep.manifest;
+  for (const c of epm.chapters) {
+    const chId = (typeof c === 'string') ? c : c.id;
+    if (typeof c === 'object' && c.fx) await loadScript(`episodes/${epm.id}/${chId}/effect.js`);
+    await loadScript(`episodes/${epm.id}/${chId}/chapter.js`);
+  }
+  const chapters = [];
+  for (const c of epm.chapters) {
+    const chId = (typeof c === 'string') ? c : c.id;
+    const data = CHAPTERS_DATA[epm.id + '/' + chId];
+    if (!data) continue;
+    const base = `episodes/${epm.id}/${chId}/`;
+    for (const sec of data.sections) { sec._base = base; chapters.push(sec); }
+  }
+  ep.chapters = chapters;
+  ep.loaded = true;
 }
 
 // ─── Element refs & state ─────────────────────
@@ -422,10 +499,14 @@ const jumpWrap= document.getElementById('jump-wrap');
 const epSelEl = document.getElementById('ep-sel');
 const bnp     = document.getElementById('bnp');
 const bnn     = document.getElementById('bnn');
+const sceneEl = document.getElementById('scene');
+const shelfEl = document.getElementById('shelf');
+const rackEl  = document.getElementById('shelf-rack');
 
 let BOOK = {}, CHAPTERS = [];
 let PAGES = [], SECTIONS = [], GROUPS = [];
 let cur = 0, busy = false, booted = false, currentEpIdx = 0, openChap = null;
+let appMode = 'shelf';
 
 // ─── Particle / atmosphere engine ────────────
 // Generic plumbing only. Concrete effects (sakura, rays, …) are registered
@@ -666,15 +747,80 @@ function loadEpisode(idx) {
   updateEffects();
 }
 
+// In reader mode the top bar holds a single "back to shelf" control.
 function buildEpSel() {
-  const reg = window.EPISODE_REGISTRY;
-  if (reg.length <= 1) { epSelEl.classList.remove('visible'); return; }
   epSelEl.classList.add('visible');
-  epSelEl.innerHTML = reg.map((ep, i) =>
-    `<button class="epb${i === currentEpIdx ? ' on' : ''}" onclick="selectEp(${i})">${ep.label}</button>`
-  ).join('');
+  epSelEl.innerHTML = `<button class="epb back" onclick="showShelf()">← 本棚</button>`;
 }
-window.selectEp = function (idx) { if (idx !== currentEpIdx) loadEpisode(idx); };
+
+// ─── Bookshelf (library) ──────────────────────
+// Derive a stable spine colour from the title when none is supplied.
+function spineColor(book) {
+  if (book.shelf && book.shelf.spine) return book.shelf.spine;
+  const s = book.title || '';
+  let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return `hsl(${h % 360} 42% 26%)`;
+}
+function spineAccent(book) {
+  return (book.shelf && book.shelf.accent) || 'rgba(245,240,228,.92)';
+}
+
+function buildShelf() {
+  const reg = window.EPISODE_REGISTRY;
+  rackEl.innerHTML = reg.map((ep, i) => {
+    const b = ep.book || {};
+    const title = b.title || ep.label || `作品${i + 1}`;
+    const author = b.author ? `著　${b.author}` : '';
+    return (
+      `<div class="spine" role="button" tabindex="0" data-idx="${i}" ` +
+        `style="background:${spineColor(b)};color:${spineAccent(b)}">` +
+        `<span class="spine-title">${title}</span>` +
+        (author ? `<span class="spine-author">${author}</span>` : '') +
+      `</div>`
+    );
+  }).join('');
+}
+
+function showShelf() {
+  appMode = 'shelf';
+  setScene(null);                 // clear reader background + particles
+  sceneEl.style.display = 'none';
+  shelfEl.classList.add('visible');
+  shelfEl.classList.remove('fade-out');
+  buildShelf();
+}
+window.showShelf = showShelf;
+
+// Open a book: lazy-load its chapters, then hand off to the reader.
+let opening = false;
+async function openBook(idx) {
+  if (opening || appMode === 'reader') return;
+  opening = true;
+  const spine = rackEl.querySelector(`.spine[data-idx="${idx}"]`);
+  if (spine) spine.classList.add('opening');
+  // Pagination needs real font metrics; wait (with a fallback) before build().
+  if (document.fonts && document.fonts.ready) {
+    await Promise.race([document.fonts.ready.catch(() => {}), new Promise(r => setTimeout(r, 1500))]);
+  }
+  await ensureEpisodeLoaded(idx);
+  shelfEl.classList.remove('visible');
+  sceneEl.style.display = '';
+  appMode = 'reader';
+  loadEpisode(idx);
+  opening = false;
+}
+window.openBook = openBook;
+
+// Spine activation (tap / keyboard) via delegation.
+rackEl.addEventListener('click', e => {
+  const sp = e.target.closest('.spine');
+  if (sp) openBook(+sp.dataset.idx);
+});
+rackEl.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const sp = e.target.closest('.spine');
+  if (sp) { e.preventDefault(); openBook(+sp.dataset.idx); }
+});
 
 // ─── Navigation helpers ───────────────────────
 const sectionOf = i => SECTIONS.find(s => i >= s.start && i <= s.end);
@@ -905,22 +1051,19 @@ window.addEventListener('resize', () => {
 // ─── Boot ─────────────────────────────────────
 function boot() {
   if (booted) return; booted = true;
-  loadEpisode(0);
+  showShelf();
 }
 
-// Load all episode/chapter data, assemble the registry, then boot
-// (font-gated, as before, so the first paginate() measures the real font).
-loadAllData().then(() => {
-  assembleRegistry();
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(boot);
-    setTimeout(boot, 1500);
-  } else { boot(); }
+// Load only the lightweight episode metadata, then show the bookshelf.
+// Each book's chapters are loaded on demand when it is opened.
+loadAllMeta().then(() => {
+  buildRegistry();
+  boot();
 });
 
 let rz;
 window.addEventListener('resize', () => {
-  if (!booted) return;
+  if (!booted || appMode !== 'reader') return;
   clearTimeout(rz);
   rz = setTimeout(() => {
     const si = SECTIONS.indexOf(sectionOf(cur));
