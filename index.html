@@ -749,7 +749,7 @@ function render(el, i) {
       <div class="cvr-body">
         <div class="cvr-genre">${BOOK.genre}</div>
         <div class="cvr-titles">
-          <div class="cvr-title">${BOOK.title}</div>
+          <div class="cvr-title" style="font-size:min(12vw, ${coverTitleFont(BOOK.title)}px)">${BOOK.title}</div>
           <div class="cvr-sub">${BOOK.sub}</div>
         </div>
         <div class="cvr-div"></div>
@@ -835,6 +835,28 @@ function spineColor(book) {
 function spineAccent(book) {
   return (book.shelf && book.shelf.accent) || 'rgba(245,240,228,.92)';
 }
+// Shrink the (vertical) title font as the text grows, so a long title still
+// fits in roughly two columns instead of spilling across the spine.
+// Vertical advance per char ≈ font-size × 1.12 (incl. .1em letter-spacing);
+// the usable column height is ~150px (matches .spine-title max-height).
+function spineTitleFont(title) {
+  const len = [...(title || '')].length;       // code-point count (CJK-safe)
+  const COL_H = 150, PER_CHAR = 1.12, MAX = 15, MIN = 8, TARGET_COLS = 2;
+  const charsPerCol = Math.ceil(len / TARGET_COLS);
+  const fit = Math.floor(COL_H / (PER_CHAR * charsPerCol));
+  return Math.max(MIN, Math.min(MAX, fit));
+}
+// Same idea for the opened book cover: scale the (vertical) title down for long
+// titles so it stays around two columns instead of filling the whole cover.
+// Usable body height ≈ 430px; vertical advance per char ≈ font × 1.22 (.22em
+// letter-spacing). The min(12vw, …) below keeps it responsive on narrow screens.
+function coverTitleFont(title) {
+  const len = [...(title || '')].length;
+  const BODY_H = 430, PER_CHAR = 1.22, MAX = 48, MIN = 22, TARGET_COLS = 2;
+  const charsPerCol = Math.ceil(len / TARGET_COLS);
+  const fit = Math.floor(BODY_H / (PER_CHAR * charsPerCol));
+  return Math.max(MIN, Math.min(MAX, fit));
+}
 
 function buildShelf() {
   const reg = window.EPISODE_REGISTRY;
@@ -845,7 +867,7 @@ function buildShelf() {
     return (
       `<div class="spine" role="button" tabindex="0" data-idx="${i}" ` +
         `style="background:${spineColor(b)};color:${spineAccent(b)}">` +
-        `<span class="spine-title">${title}</span>` +
+        `<span class="spine-title" style="font-size:${spineTitleFont(title)}px">${title}</span>` +
         (author ? `<span class="spine-author">${author}</span>` : '') +
       `</div>`
     );
