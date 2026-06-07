@@ -200,4 +200,14 @@ window.EPISODE_MANIFEST = [
       { id: 'ch06', fx: true },
     ],
   },
+  {
+    id: 'ep15',
+    chapters: [
+      { id: 'ch01', fx: true },
+      { id: 'ch02', fx: true },
+      { id: 'ch03', fx: true },
+      { id: 'ch04', fx: true },
+      { id: 'ch05', fx: true },
+    ],
+  },
 ];
