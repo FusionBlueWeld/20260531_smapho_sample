@@ -532,11 +532,12 @@ async function ensureEpisodeLoaded(idx) {
   const ep = window.EPISODE_REGISTRY[idx];
   if (!ep || ep.loaded) return;
   const epm = ep.manifest;
-  for (const c of epm.chapters) {
+  await Promise.all(epm.chapters.flatMap(c => {
     const chId = (typeof c === 'string') ? c : c.id;
-    if (typeof c === 'object' && c.fx) await loadScript(`episodes/${epm.id}/${chId}/effect.js`);
-    await loadScript(`episodes/${epm.id}/${chId}/chapter.js`);
-  }
+    const jobs = [loadScript(`episodes/${epm.id}/${chId}/chapter.js`)];
+    if (typeof c === 'object' && c.fx) jobs.push(loadScript(`episodes/${epm.id}/${chId}/effect.js`));
+    return jobs;
+  }));
   const chapters = [];
   for (const c of epm.chapters) {
     const chId = (typeof c === 'string') ? c : c.id;
