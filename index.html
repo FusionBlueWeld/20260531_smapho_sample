@@ -922,8 +922,8 @@ const isEnd = s => s.label === '表紙' || s.label === '奥付';
 
 function ui() {
   const sec = sectionOf(cur);
-  bnp.disabled = !(cur > sec.start || (isEnd(sec) && cur > 0));
-  bnn.disabled = !(cur < sec.end   || (isEnd(sec) && cur < PAGES.length - 1));
+  bnp.disabled = cur <= 0;
+  bnn.disabled = cur >= PAGES.length - 1;
   let dh = '';
   for (let i = sec.start; i <= sec.end; i++) dh += `<div class="dot${i === cur ? ' on' : ''}"></div>`;
   dotsEl.innerHTML = dh;
@@ -959,10 +959,8 @@ function navigate(target, dir) {
 
 function go(dir) {
   if (busy) return;
-  const sec = sectionOf(cur);
   const n = cur + dir;
-  if (n >= sec.start && n <= sec.end) { navigate(n, dir); return; }
-  if (isEnd(sec) && n >= 0 && n < PAGES.length) navigate(n, dir);
+  if (n >= 0 && n < PAGES.length) navigate(n, dir);
 }
 
 function jump(si) {
