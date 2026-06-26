@@ -336,18 +336,21 @@
     .jb.on { background: rgba(201,168,76,.22); border-color: rgba(201,168,76,.5); color: #e8d49a; }
 
     /* 閉じた章：3枚重なりの見た目（等間隔・不透過） */
-    .jb.stacked { background: #201510; z-index: 0; }
+    .jb.stacked {
+      background: #201510; z-index: 0;
+      box-shadow: 0 3px 8px rgba(0,0,0,.22);
+    }
     .jb.stacked::before, .jb.stacked::after {
       content: ''; position: absolute; inset: 0; border-radius: inherit;
       transition: transform .24s ease, opacity .24s ease;
     }
     .jb.stacked::before {
       background: #1a1009; border: 1px solid rgba(255,255,255,.11);
-      z-index: -1; transform: translate(6px, 0);
+      z-index: -1; transform: translate(4px, 3px);
     }
     .jb.stacked::after {
       background: #120c06; border: 1px solid rgba(255,255,255,.08);
-      z-index: -2; transform: translate(12px, 0);
+      z-index: -2; transform: translate(8px, 6px);
     }
     /* 展開中：重なりを閉じてアクセントを付ける */
     .jb.expanded { background: rgba(201,168,76,.26); border-color: rgba(201,168,76,.62); color: #f0dca8; }
