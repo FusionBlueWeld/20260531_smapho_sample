@@ -1,7 +1,7 @@
 registerChapter('ep07', 'ch02', {
   "sections": [
     {
-      "num": "第二章",
+      "num": "第二章の一",
       "ti": "白蛇と祭礼",
       "effect": "doubt-haze",
       "paras": [
@@ -13,7 +13,7 @@ registerChapter('ep07', 'ch02', {
       ]
     },
     {
-      "num": "第二章",
+      "num": "第二章の二",
       "ti": "第三章の２ 小さな波紋",
       "effect": "doubt-haze",
       "paras": [
@@ -24,7 +24,7 @@ registerChapter('ep07', 'ch02', {
       ]
     },
     {
-      "num": "第二章",
+      "num": "第二章の三",
       "ti": "第四章の１ 欠けた月の下で",
       "effect": "moon-river",
       "paras": [
@@ -38,7 +38,7 @@ registerChapter('ep07', 'ch02', {
       ]
     },
     {
-      "num": "第二章",
+      "num": "第二章の四",
       "ti": "第四章の２ 響かぬ祭り",
       "effect": "hollow-festival",
       "paras": [

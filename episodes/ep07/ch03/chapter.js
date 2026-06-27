@@ -1,7 +1,7 @@
 registerChapter('ep07', 'ch03', {
   "sections": [
     {
-      "num": "第三章",
+      "num": "第三章の一",
       "ti": "堰と海辺",
       "effect": "cold-famine",
       "paras": [
@@ -12,7 +12,7 @@ registerChapter('ep07', 'ch03', {
       ]
     },
     {
-      "num": "第三章",
+      "num": "第三章の二",
       "ti": "第五章の２ お前のせいだ",
       "effect": "cold-famine",
       "paras": [
@@ -24,7 +24,7 @@ registerChapter('ep07', 'ch03', {
       ]
     },
     {
-      "num": "第三章",
+      "num": "第三章の三",
       "ti": "第六章の１ 捨てられた者",
       "effect": "grey-offering",
       "paras": [
@@ -35,7 +35,7 @@ registerChapter('ep07', 'ch03', {
       ]
     },
     {
-      "num": "第三章",
+      "num": "第三章の四",
       "ti": "第六章の２ 風に揺れる供物",
       "effect": "grey-offering",
       "paras": [

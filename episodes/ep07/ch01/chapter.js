@@ -1,7 +1,7 @@
 registerChapter('ep07', 'ch01', {
   "sections": [
     {
-      "num": "第一章",
+      "num": "第一章の一",
       "ti": "水の声",
       "effect": "festival-air",
       "paras": [
@@ -12,7 +12,7 @@ registerChapter('ep07', 'ch01', {
       ]
     },
     {
-      "num": "第一章",
+      "num": "第一章の二",
       "ti": "第一章の２ 苔むした祭壇",
       "effect": "festival-air",
       "paras": [
@@ -24,7 +24,7 @@ registerChapter('ep07', 'ch01', {
       ]
     },
     {
-      "num": "第一章",
+      "num": "第一章の三",
       "ti": "第二章の１ 大地を打つ者たち",
       "effect": "dance-dust",
       "paras": [
@@ -35,7 +35,7 @@ registerChapter('ep07', 'ch01', {
       ]
     },
     {
-      "num": "第一章",
+      "num": "第一章の四",
       "ti": "第二章の２ 傷ある指導者",
       "effect": "dance-dust",
       "paras": [
