@@ -1,3 +1,5 @@
+/* Source: episodes/ep02/ch01/effect.js */
+
 /* 第一章の演出。registerEffect(name, { bg, step, draw }) でエンジンに登録する。
  * 描画ループ／canvas管理／ページのくり抜きは index.html の汎用エンジンが担当。 */
 (function () {

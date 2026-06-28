@@ -1,63 +1,69 @@
-/* 第五章の演出。 */
+/* Source: episodes/ep03/ch08/effect.js */
+
+/* 第八章の演出。 */
 (function () {
 
-  // ── 第五章の１：本社CTO応接室。重厚で張りつめた、琥珀色の静謐 ──
-  function spawnAmber() {
+  // ── 第八章の１・２：境界を越えて。暖色と緑、二つの流れが中央で出会い溶け合う ──
+  function spawnStream() {
     const W = window.innerWidth, H = window.innerHeight;
+    const fromLeft = Math.random() < 0.5;
     return {
-      x: Math.random() * W, y: Math.random() * H,
-      r: 0.7 + Math.random() * 1.6,
-      vy: -(0.04 + Math.random() * 0.14), vx: (Math.random() - 0.5) * 0.08,
-      base: 0.12 + Math.random() * 0.3,
-      phase: Math.random() * Math.PI * 2, freq: 0.007 + Math.random() * 0.015,
+      x: fromLeft ? -10 : W + 10, y: Math.random() * H,
+      r: 0.7 + Math.random() * 1.7,
+      vx: (fromLeft ? 1 : -1) * (0.3 + Math.random() * 0.7),
+      vy: (Math.random() - 0.5) * 0.15,
+      base: 0.16 + Math.random() * 0.36,
+      phase: Math.random() * Math.PI * 2, freq: 0.008 + Math.random() * 0.016,
+      warm: fromLeft,
     };
   }
-  registerEffect('hq-appeal', {
-    bg: 'radial-gradient(ellipse at 50% 80%, rgba(200,150,70,.10) 0%, transparent 50%), '
-      + 'radial-gradient(ellipse at 50% 35%, #241c12 0%, #17110a 62%, #0d0905 100%), #0a0705',
-    step(ps, { H }) {
-      if (ps.length < 46 && Math.random() < 0.34) ps.push(spawnAmber());
-      ps = ps.filter(p => p.y > -20);
-      ps.forEach(p => { p.y += p.vy; p.x += p.vx; p.phase += p.freq; });
+  registerEffect('border-cross', {
+    bg: 'linear-gradient(90deg, rgba(220,150,70,.07) 0%, transparent 42%, transparent 58%, rgba(60,180,130,.07) 100%), '
+      + 'radial-gradient(ellipse at 50% 50%, #15201c 0%, #0e1714 60%, #070d0a 100%), #050a07',
+    step(ps, { W }) {
+      if (ps.length < 60 && Math.random() < 0.5) ps.push(spawnStream());
+      ps = ps.filter(p => p.x > -30 && p.x < W + 30);
+      ps.forEach(p => { p.x += p.vx; p.y += p.vy + Math.sin(p.phase) * 0.2; p.phase += p.freq; });
       return ps;
     },
     draw(ctx, p, { t }) {
       const a = p.base * (0.5 + 0.5 * Math.sin(t * p.freq + p.phase));
       ctx.save();
       ctx.globalAlpha = a;
-      ctx.fillStyle = '#d6a85a';
-      ctx.shadowColor = '#d6a85a'; ctx.shadowBlur = 6;
+      ctx.fillStyle = p.warm ? '#e8b46e' : '#5fe6b0';
+      ctx.shadowColor = p.warm ? '#e8b46e' : '#5fe6b0'; ctx.shadowBlur = 7;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     },
   });
 
-  // ── 第五章の２：所長の激怒。沸き立つ赤い燠火と、舞い上がる火の粉 ──
-  function spawnSpark() {
+  // ── 第八章の３：夜を編む。明滅する不安定な緑の光（気まぐれな副次効果）──
+  function spawnFlicker() {
+    const W = window.innerWidth, H = window.innerHeight;
     return {
-      x: Math.random() * window.innerWidth, y: window.innerHeight + 10,
-      r: 0.7 + Math.random() * 1.5,
-      vy: -(0.5 + Math.random() * 1.1), vx: (Math.random() - 0.5) * 0.5,
-      phase: Math.random() * Math.PI * 2, freq: 0.02 + Math.random() * 0.04,
-      base: 0.25 + Math.random() * 0.45, life: 0, maxLife: 120 + Math.random() * 120,
+      x: Math.random() * W, y: Math.random() * H,
+      r: 0.6 + Math.random() * 1.6,
+      drift: (Math.random() - 0.5) * 0.1, vy: (Math.random() - 0.5) * 0.08,
+      base: 0.1 + Math.random() * 0.4,
+      phase: Math.random() * Math.PI * 2, freq: 0.05 + Math.random() * 0.12,
     };
   }
-  registerEffect('director-rage', {
-    bg: 'radial-gradient(ellipse at 50% 104%, rgba(200,50,30,.30) 0%, rgba(110,25,15,.14) 32%, transparent 58%), '
-      + 'radial-gradient(ellipse at 50% 42%, #1f100c 0%, #140807 60%, #0a0403 100%), #080302',
+  registerEffect('night-weave', {
+    bg: 'repeating-linear-gradient(0deg, transparent 0, transparent 32px, rgba(60,150,120,.04) 32px, rgba(60,150,120,.04) 33px), '
+      + 'radial-gradient(ellipse at 50% 50%, #0c1a16 0%, #081310 62%, #040b08 100%), #030806',
     step(ps) {
-      if (ps.length < 50 && Math.random() < 0.5) ps.push(spawnSpark());
-      ps = ps.filter(p => p.life < p.maxLife && p.y > -20);
-      ps.forEach(p => { p.life++; p.y += p.vy; p.x += p.vx; p.vy += 0.004; });
+      while (ps.length < 54) ps.push(spawnFlicker());
+      ps.forEach(p => { p.x += p.drift; p.y += p.vy; p.phase += p.freq; });
       return ps;
     },
     draw(ctx, p, { t }) {
-      const fade = Math.min(p.life / 20, 1) * Math.min((p.maxLife - p.life) / 50, 1);
-      const a = p.base * fade * (0.6 + 0.4 * Math.sin(t * p.freq + p.phase));
+      // 不規則に明滅させ、点いては消える「気まぐれな」灯りを表現
+      const flick = Math.sin(t * p.freq + p.phase);
+      const a = p.base * Math.max(0, flick) * (0.4 + 0.6 * Math.random());
       ctx.save();
       ctx.globalAlpha = a;
-      ctx.fillStyle = Math.random() > 0.5 ? '#ff7a3c' : '#e64422';
-      ctx.shadowColor = '#ff5a2a'; ctx.shadowBlur = 7;
+      ctx.fillStyle = '#6fe6b4';
+      ctx.shadowColor = '#6fe6b4'; ctx.shadowBlur = 9;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     },

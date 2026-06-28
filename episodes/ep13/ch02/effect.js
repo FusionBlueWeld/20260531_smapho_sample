@@ -1,3 +1,5 @@
+/* Source: episodes/ep13/ch02/effect.js */
+
 /* 第二章の演出 — 凍てついた別れ。まばらに落ちる、冷たく青い雨。 */
 (function () {
 

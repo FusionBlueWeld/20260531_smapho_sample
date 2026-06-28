@@ -1,3 +1,5 @@
+/* Source: episodes/ep14/ch04/effect.js */
+
 /* 第三章の演出 — 宇宙人のホログラム。宙に立ちのぼる、緑の光文字の粒。 */
 (function () {
 

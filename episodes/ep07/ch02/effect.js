@@ -1,3 +1,5 @@
+/* Source: episodes/ep07/ch02/effect.js */
+
 /* Effects from ep07/ch03. */
 /* 第三章の演出。 */
 (function () {

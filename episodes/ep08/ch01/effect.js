@@ -1,3 +1,5 @@
+/* Source: episodes/ep08/ch01/effect.js */
+
 /* 第一章の演出。 */
 (function () {
 

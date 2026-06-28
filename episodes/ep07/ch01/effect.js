@@ -1,3 +1,5 @@
+/* Source: episodes/ep07/ch01/effect.js */
+
 /* Effects from ep07/ch01. */
 /* 第一章の演出。 */
 (function () {

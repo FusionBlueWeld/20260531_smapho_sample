@@ -1,3 +1,5 @@
+/* Source: episodes/ep13/ch01/effect.js */
+
 /* 第一章の演出 — カフェの窓を流れる氷雨。灰色のヴェールに包まれた街。 */
 (function () {
 

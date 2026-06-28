@@ -1,3 +1,5 @@
+/* Source: episodes/ep15/ch03/effect.js */
+
 /* 第三章の演出 — シャドーソニック。加速する残像と、白く弾ける衝撃。 */
 (function () {
 

@@ -1,3 +1,5 @@
+/* Source: episodes/ep14/ch02/effect.js */
+
 /* 第二章の演出 — 夜の滑走路。宇宙船の光を受けて舞う、夜気の粒。 */
 (function () {
 

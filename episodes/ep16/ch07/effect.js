@@ -1,3 +1,5 @@
+/* Source: episodes/ep16/ch07/effect.js */
+
 /* 第七章の演出 — デバッグ戦闘。高速で交錯する青白い軌跡と、弾ける火花。 */
 (function () {
 

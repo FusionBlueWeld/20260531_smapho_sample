@@ -1,3 +1,5 @@
+/* Source: episodes/ep16/ch06/effect.js */
+
 /* 第三章の演出 — 情報空間。立ちのぼる青緑のデータ片と、走るスキャンライン。 */
 (function () {
 

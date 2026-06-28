@@ -1,34 +1,38 @@
-/* 第七章の演出 — コーディング。緑のコードが縦に降る、端末の光。 */
+/* Source: episodes/ep09/ch09/effect.js */
+
+/* 第九章の演出 — 空間の歪み。波打つように左右へ揺れる光の格子。 */
 (function () {
 
-  // ── ターミナルの文字列のように、上から下へ流れ落ちる緑の点列 ──
+  // ── うねる壁。横方向に正弦波で揺れながら浮遊する粒 ──
   function spawn() {
-    const W = window.innerWidth;
+    const W = window.innerWidth, H = window.innerHeight;
     return {
-      x: Math.floor(Math.random() * (W / 14)) * 14 + 7,
-      y: -10,
-      r: 0.8 + Math.random() * 1.2,
-      v: 1.2 + Math.random() * 2.4,
-      base: 0.1 + Math.random() * 0.3,
-      phase: Math.random() * Math.PI * 2, freq: 0.04 + Math.random() * 0.08,
+      x0: Math.random() * W, y: Math.random() * H,
+      amp: 8 + Math.random() * 30,
+      r: 0.7 + Math.random() * 1.6,
+      vy: -(0.03 + Math.random() * 0.12),
+      base: 0.08 + Math.random() * 0.26,
+      phase: Math.random() * Math.PI * 2, freq: 0.012 + Math.random() * 0.03,
+      col: Math.random() > 0.5 ? '#a6b6ff' : '#c89cff',
     };
   }
-  registerEffect('sim-code', {
-    bg: 'radial-gradient(ellipse at 50% 30%, rgba(60,160,110,.08) 0%, transparent 56%), '
-      + 'linear-gradient(170deg, #0d1612 0%, #0a110e 55%, #060a08 100%), #040705',
+  registerEffect('space-warp', {
+    bg: 'radial-gradient(ellipse at 50% 50%, rgba(120,120,220,.12) 0%, transparent 60%), '
+      + 'linear-gradient(170deg, #181430 0%, #100e24 55%, #080614 100%), #050410',
     step(ps, { H }) {
-      if (ps.length < 56 && Math.random() < 0.6) ps.push(spawn());
-      ps = ps.filter(p => p.y < H + 20);
-      ps.forEach(p => { p.y += p.v; p.phase += p.freq; });
+      if (ps.length < 50 && Math.random() < 0.5) ps.push(spawn());
+      ps = ps.filter(p => p.y > -20);
+      ps.forEach(p => { p.y += p.vy; p.phase += p.freq; });
       return ps;
     },
     draw(ctx, p, { t }) {
-      const a = p.base * (0.5 + 0.5 * Math.sin(t * p.freq + p.phase));
+      const a = p.base * (0.45 + 0.55 * Math.sin(t * p.freq + p.phase));
+      const x = p.x0 + Math.sin(t * p.freq * 2 + p.phase) * p.amp;
       ctx.save();
       ctx.globalAlpha = a;
-      ctx.fillStyle = '#6fe6a0';
-      ctx.shadowColor = '#6fe6a0'; ctx.shadowBlur = 5;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = p.col;
+      ctx.shadowColor = p.col; ctx.shadowBlur = 7;
+      ctx.beginPath(); ctx.arc(x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     },
   });

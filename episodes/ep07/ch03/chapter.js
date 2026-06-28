@@ -1,7 +1,8 @@
+/* 第三章 - compacted chapter data. */
 registerChapter('ep07', 'ch03', {
   "sections": [
     {
-      "num": "第三章の一",
+      "num": "第三章の１",
       "ti": "堰と海辺",
       "effect": "cold-famine",
       "paras": [
@@ -12,7 +13,7 @@ registerChapter('ep07', 'ch03', {
       ]
     },
     {
-      "num": "第三章の二",
+      "num": "第三章の２",
       "ti": "第五章の２ お前のせいだ",
       "effect": "cold-famine",
       "paras": [
@@ -24,7 +25,7 @@ registerChapter('ep07', 'ch03', {
       ]
     },
     {
-      "num": "第三章の三",
+      "num": "第三章の３",
       "ti": "第六章の１ 捨てられた者",
       "effect": "grey-offering",
       "paras": [
@@ -35,7 +36,7 @@ registerChapter('ep07', 'ch03', {
       ]
     },
     {
-      "num": "第三章の四",
+      "num": "第三章の４",
       "ti": "第六章の２ 風に揺れる供物",
       "effect": "grey-offering",
       "paras": [

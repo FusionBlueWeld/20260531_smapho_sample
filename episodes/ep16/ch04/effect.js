@@ -1,3 +1,5 @@
+/* Source: episodes/ep16/ch04/effect.js */
+
 /* 第四章の演出 — 侵食。明滅し、ジッターする粒子。時おり走る赤い異常。 */
 (function () {
 

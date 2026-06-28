@@ -1,36 +1,41 @@
-/* 第十章の演出 — 高次元の海。色彩がとろけ合う多幸感の漂流。 */
+/* Source: episodes/ep09/ch12/effect.js */
+
+/* 第十二章の演出 — 特異点の収束と爆発。中心へ集まり、白く弾ける。 */
 (function () {
 
-  // ── 音が色になる共感覚。虹色の粒がゆっくりと漂い、明滅する ──
+  // ── すべての特異点が中心の一点へ吸い寄せられ、強烈に明滅する ──
   function spawn() {
     const W = window.innerWidth, H = window.innerHeight;
+    const ang = Math.random() * Math.PI * 2;
+    const rad = Math.max(W, H) * (0.3 + Math.random() * 0.4);
     return {
-      x: Math.random() * W, y: Math.random() * H,
-      r: 1.0 + Math.random() * 2.6,
-      vx: (Math.random() - 0.5) * 0.18, vy: (Math.random() - 0.5) * 0.14,
-      base: 0.08 + Math.random() * 0.3,
-      hue: Math.random() * 360,
-      hueV: -0.3 + Math.random() * 0.6,
-      phase: Math.random() * Math.PI * 2, freq: 0.006 + Math.random() * 0.02,
+      cx: W * 0.5, cy: H * 0.46,
+      x: W * 0.5 + Math.cos(ang) * rad,
+      y: H * 0.46 + Math.sin(ang) * rad,
+      r: 0.8 + Math.random() * 2.0,
+      pull: 0.01 + Math.random() * 0.02,
+      base: 0.12 + Math.random() * 0.4,
+      phase: Math.random() * Math.PI * 2, freq: 0.02 + Math.random() * 0.05,
+      col: Math.random() > 0.5 ? '#ffffff' : '#cfe0ff',
     };
   }
-  registerEffect('hyperdrift', {
-    bg: 'radial-gradient(ellipse at 30% 30%, rgba(150,90,200,.12) 0%, transparent 50%), '
-      + 'radial-gradient(ellipse at 72% 66%, rgba(80,150,200,.12) 0%, transparent 52%), '
-      + 'linear-gradient(150deg, #1c1438 0%, #121030 45%, #0a0820 100%), #07061a',
+  registerEffect('singularity-burst', {
+    bg: 'radial-gradient(circle at 50% 46%, rgba(255,255,255,.2) 0%, rgba(160,170,255,.1) 12%, transparent 40%), '
+      + 'linear-gradient(160deg, #14122e 0%, #0a0820 52%, #050310 100%), #03020c',
     step(ps, { W, H }) {
-      if (ps.length < 56 && Math.random() < 0.5) ps.push(spawn());
-      ps = ps.filter(p => p.x > -30 && p.x < W + 30 && p.y > -30 && p.y < H + 30);
-      ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.hue += p.hueV; p.phase += p.freq; });
+      if (ps.length < 64 && Math.random() < 0.65) ps.push(spawn());
+      ps.forEach(p => {
+        p.x += (p.cx - p.x) * p.pull; p.y += (p.cy - p.y) * p.pull; p.phase += p.freq;
+      });
+      ps = ps.filter(p => Math.hypot(p.x - p.cx, p.y - p.cy) > 3);
       return ps;
     },
     draw(ctx, p, { t }) {
-      const a = p.base * (0.45 + 0.55 * Math.sin(t * p.freq + p.phase));
-      const col = `hsl(${(p.hue % 360 + 360) % 360}, 75%, 70%)`;
+      const a = p.base * (0.5 + 0.5 * Math.abs(Math.sin(t * p.freq + p.phase)));
       ctx.save();
       ctx.globalAlpha = a;
-      ctx.fillStyle = col;
-      ctx.shadowColor = col; ctx.shadowBlur = 12;
+      ctx.fillStyle = p.col;
+      ctx.shadowColor = '#dfe6ff'; ctx.shadowBlur = 12;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     },

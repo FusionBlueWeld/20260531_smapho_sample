@@ -1,4 +1,4 @@
-/* 第六章 — このフォルダ単体で完結する章データ。 */
+/* 第六章 - compacted chapter data. */
 registerChapter('ep14', 'ch06', {
   "sections": [
     {

@@ -1,4 +1,4 @@
-/* 第一章 — このフォルダ単体で完結する章データ。 */
+/* 第一章 - compacted chapter data. */
 registerChapter('ep14', 'ch01', {
   "sections": [
     {

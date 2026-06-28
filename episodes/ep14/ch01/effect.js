@@ -1,3 +1,5 @@
+/* Source: episodes/ep14/ch01/effect.js */
+
 /* 第一章の演出 — 防衛省地下の会議室。冷たい闇に漂う、青白いチリ。 */
 (function () {
 

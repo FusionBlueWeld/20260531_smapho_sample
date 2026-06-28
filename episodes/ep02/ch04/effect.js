@@ -1,71 +1,126 @@
-/* 第四章の演出。 */
+/* Source: episodes/ep02/ch06/effect.js */
+
+/* 第六章の演出。 */
 (function () {
 
-  // ── 第四章の１：渦の痕跡。中心へ巻き込まれる粒子の渦 ──────
-  function spawnSpiral() {
+  // ── 第六章の１：勝利と平和。穏やかに漂うフロートシティの灯 ──
+  function spawnLight() {
+    const W = window.innerWidth, H = window.innerHeight;
     return {
-      ang: Math.random() * Math.PI * 2,
-      rad: 60 + Math.random() * 220,
-      r: 0.6 + Math.random() * 1.4,
-      base: 0.2 + Math.random() * 0.45,
-      spin: 0.004 + Math.random() * 0.006,
-      pull: 0.12 + Math.random() * 0.12,
+      x: Math.random() * W, y: H * (0.1 + Math.random() * 0.7),
+      r: 0.8 + Math.random() * 1.8,
+      base: 0.25 + Math.random() * 0.45,
+      phase: Math.random() * Math.PI * 2, freq: 0.005 + Math.random() * 0.012,
+      drift: 0.05 + Math.random() * 0.12, warm: Math.random() > 0.5,
     };
   }
-  registerEffect('vortex-trace', {
-    bg: 'radial-gradient(ellipse at 50% 46%, rgba(120,90,200,.14) 0%, transparent 42%), '
-      + 'radial-gradient(ellipse at 50% 50%, #161028 0%, #0c0818 60%, #060410 100%), #05030c',
-    step(ps, { W, H }) {
-      if (ps.length < 80 && Math.random() < 0.5) ps.push(spawnSpiral());
-      ps = ps.filter(p => p.rad > 4);
-      ps.forEach(p => { p.ang += p.spin; p.rad -= p.pull; });
+  registerEffect('peace-float', {
+    bg: 'radial-gradient(ellipse at 50% 14%, rgba(120,175,235,.16) 0%, transparent 48%), '
+      + 'radial-gradient(ellipse at 50% 78%, rgba(80,130,190,.10) 0%, transparent 44%), '
+      + 'radial-gradient(ellipse at 50% 46%, #16263e 0%, #0c1726 60%, #060c16 100%), #060b14',
+    step(ps, { W }) {
+      while (ps.length < 55) ps.push(spawnLight());
+      ps.forEach(p => { p.x += p.drift; if (p.x > W + 5) p.x = -5; });
       return ps;
     },
-    draw(ctx, p, { W, H }) {
-      const cx = W / 2, cy = H * 0.46;
-      const x = cx + Math.cos(p.ang) * p.rad;
-      const y = cy + Math.sin(p.ang) * p.rad * 0.7;
-      const fade = Math.min(p.rad / 60, 1);
+    draw(ctx, p, { t }) {
+      const a = p.base * (0.5 + 0.5 * Math.sin(t * p.freq + p.phase));
       ctx.save();
-      ctx.globalAlpha = p.base * fade;
-      ctx.fillStyle = '#b89cff'; ctx.shadowColor = '#b89cff'; ctx.shadowBlur = 5;
-      ctx.beginPath(); ctx.arc(x, y, p.r, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = p.warm ? '#ffe0a8' : '#a8d0f8';
+      ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 5;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     },
   });
 
-  // ── 第四章の２：脅迫メール。明滅する不気味なグリフ ────────
-  function spawnGlyph() {
+  // ── 第六章の２：太陽の消失。消えゆく星と、落下し崩れる砂 ──
+  function spawnStar2() {
     return {
       x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
-      size: 8 + Math.random() * 16,
-      base: 0.06 + Math.random() * 0.14,
-      phase: Math.random() * Math.PI * 2, freq: 0.02 + Math.random() * 0.05,
-      rot: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 0.01,
-      life: 0, maxLife: 160 + Math.random() * 160,
+      r: 0.4 + Math.random() * 1.3, base: 0.4 + Math.random() * 0.55,
+      phase: Math.random() * Math.PI * 2, freq: 0.01 + Math.random() * 0.02,
+      dying: 0, dieAt: 80 + Math.random() * 400,
     };
   }
-  registerEffect('mail-glyph', {
-    bg: 'radial-gradient(ellipse at 50% 44%, #181024 0%, #0e0818 60%, #060410 100%), #05030c',
-    step(ps) {
-      if (ps.length < 18 && Math.random() < 0.08) ps.push(spawnGlyph());
-      ps = ps.filter(p => p.life < p.maxLife);
-      ps.forEach(p => { p.life++; p.rot += p.vr; });
+  function spawnFall() {
+    return {
+      x: Math.random() * window.innerWidth, y: -10,
+      r: 0.6 + Math.random() * 1.5, vy: 1.5 + Math.random() * 3,
+      vx: (Math.random() - 0.5) * 0.4, alpha: 0.3 + Math.random() * 0.4,
+    };
+  }
+  registerEffect('sun-vanish', {
+    bg: 'radial-gradient(ellipse at 50% 50%, #0a0814 0%, #050410 60%, #020108 100%), #010006',
+    step(ps, { H }) {
+      while (ps.filter(p => p.kind !== 'fall').length < 70) { const s = spawnStar2(); s.kind = 'star'; ps.push(s); }
+      if (Math.random() < 0.4) { const f = spawnFall(); f.kind = 'fall'; ps.push(f); }
+      ps = ps.filter(p => p.kind === 'fall' ? p.y < H + 20 : p.dying < p.dieAt + 40);
+      ps.forEach(p => {
+        if (p.kind === 'fall') { p.y += p.vy; p.x += p.vx; }
+        else p.dying++;
+      });
       return ps;
     },
     draw(ctx, p, { t }) {
-      const fade = Math.min(p.life / 30, 1) * Math.min((p.maxLife - p.life) / 30, 1);
-      const flick = (Math.sin(t * p.freq + p.phase) > -0.3) ? 1 : 0.25;
       ctx.save();
-      ctx.globalAlpha = p.base * fade * flick;
-      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
-      ctx.strokeStyle = '#7a52c8'; ctx.lineWidth = 1;
-      const s = p.size;
-      ctx.beginPath();
-      ctx.arc(0, 0, s * 0.5, 0.4, Math.PI * 1.7);
-      ctx.moveTo(0, -s * 0.5); ctx.lineTo(0, s * 0.5);
-      ctx.moveTo(-s * 0.5, 0); ctx.lineTo(s * 0.5, 0);
-      ctx.stroke();
+      if (p.kind === 'fall') {
+        ctx.globalAlpha = p.alpha; ctx.fillStyle = '#b8bcd0';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      } else {
+        const death = p.dying < p.dieAt ? 1 : Math.max(0, 1 - (p.dying - p.dieAt) / 40);
+        const a = p.base * (0.45 + 0.55 * Math.sin(t * p.freq + p.phase)) * death;
+        ctx.globalAlpha = a; ctx.fillStyle = '#e8eeff';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    },
+  });
+
+})();
+
+
+/* Source: episodes/ep02/ch07/effect.js */
+
+/* 終章の演出。 */
+(function () {
+
+  // ── 終章：シミュレーション。落下する端末文字（コードの雨）と冷却光 ──
+  const GLYPHS = '01<>{}[]#/\\;=+*アサ消失神QPU';
+  function spawnCol() {
+    const W = window.innerWidth;
+    return {
+      x: Math.floor(Math.random() * (W / 14)) * 14 + 4,
+      y: -Math.random() * window.innerHeight,
+      speed: 1.2 + Math.random() * 2.6,
+      len: 5 + Math.floor(Math.random() * 12),
+      base: 0.12 + Math.random() * 0.22,
+      ch: Array.from({ length: 18 }, () => GLYPHS[(Math.random() * GLYPHS.length) | 0]),
+    };
+  }
+  registerEffect('sim-terminal', {
+    bg: 'radial-gradient(ellipse at 50% 60%, rgba(40,180,140,.08) 0%, transparent 50%), '
+      + 'radial-gradient(ellipse at 50% 42%, #061410 0%, #030c0a 62%, #010605 100%), #010403',
+    step(ps, { H }) {
+      if (ps.length < 46 && Math.random() < 0.5) ps.push(spawnCol());
+      ps = ps.filter(p => p.y - p.len * 16 < H + 20);
+      ps.forEach(p => {
+        p.y += p.speed;
+        if (Math.random() < 0.06) p.ch[(Math.random() * p.ch.length) | 0] = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+      });
+      return ps;
+    },
+    draw(ctx, p) {
+      ctx.save();
+      ctx.font = '13px monospace'; ctx.textBaseline = 'top';
+      for (let i = 0; i < p.len; i++) {
+        const yy = p.y - i * 16;
+        if (yy < -16 || yy > window.innerHeight + 16) continue;
+        const head = i === 0;
+        ctx.globalAlpha = p.base * (1 - i / p.len) * (head ? 2.2 : 1);
+        ctx.fillStyle = head ? '#9fffd8' : '#3fbf90';
+        ctx.fillText(p.ch[i % p.ch.length], p.x, yy);
+      }
       ctx.restore();
     },
   });

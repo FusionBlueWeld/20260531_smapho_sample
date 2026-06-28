@@ -1,3 +1,5 @@
+/* Source: episodes/ep15/ch01/effect.js */
+
 /* 第一章の演出 — 熱気こもる体育館。汗と熱が立ちのぼる、橙色のゆらぎ。 */
 (function () {
 

@@ -1,3 +1,5 @@
+/* Source: episodes/ep16/ch08/effect.js */
+
 /* 第八章の演出 — 記憶の奔流。意識を駆け上がる、白金色のデータの奔流。 */
 (function () {
 

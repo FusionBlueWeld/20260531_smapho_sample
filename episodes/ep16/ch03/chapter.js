@@ -1,4 +1,4 @@
-/* 第三章 — このフォルダ単体で完結する章データ。 */
+/* 第三章 - compacted chapter data. */
 registerChapter('ep16', 'ch03', {
   "sections": [
     {

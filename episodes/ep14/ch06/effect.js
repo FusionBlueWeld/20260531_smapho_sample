@@ -1,3 +1,5 @@
+/* Source: episodes/ep14/ch06/effect.js */
+
 /* 第六章の演出 — 帰還のあと。静かな夜空に瞬く星と、消えゆく光の余韻。 */
 (function () {
 

@@ -1,3 +1,5 @@
+/* Source: episodes/ep15/ch05/effect.js */
+
 /* 第五章の演出 — 試合のあと。音の消えたコートに、ゆっくり沈む灰色の塵。 */
 (function () {
 

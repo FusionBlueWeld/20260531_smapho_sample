@@ -1,4 +1,4 @@
-/* 第八章 — このフォルダ単体で完結する章データ。 */
+/* 第八章 - compacted chapter data. */
 registerChapter('ep16', 'ch08', {
   "sections": [
     {

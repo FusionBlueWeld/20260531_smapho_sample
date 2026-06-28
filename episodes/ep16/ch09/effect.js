@@ -1,3 +1,5 @@
+/* Source: episodes/ep16/ch09/effect.js */
+
 /* 第一章の演出 — 深夜のファストフード店。冷たい蛍光灯に漂う、無音の塵。 */
 (function () {
 

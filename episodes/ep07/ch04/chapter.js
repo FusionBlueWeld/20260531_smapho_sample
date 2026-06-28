@@ -1,7 +1,8 @@
+/* 第四章 - compacted chapter data. */
 registerChapter('ep07', 'ch04', {
   "sections": [
     {
-      "num": "第四章の一",
+      "num": "第四章の１",
       "ti": "水神の鼓動",
       "effect": "lost-civilization",
       "paras": [
@@ -11,7 +12,7 @@ registerChapter('ep07', 'ch04', {
       ]
     },
     {
-      "num": "第四章の二",
+      "num": "第四章の２",
       "ti": "第七章の２ 土に預けたもの",
       "effect": "lost-civilization",
       "paras": [
@@ -24,7 +25,7 @@ registerChapter('ep07', 'ch04', {
       ]
     },
     {
-      "num": "第四章の三",
+      "num": "第四章の３",
       "ti": "第七章の３ 土の下の心臓",
       "effect": "lost-civilization",
       "paras": [
@@ -33,7 +34,7 @@ registerChapter('ep07', 'ch04', {
       ]
     },
     {
-      "num": "第四章の四",
+      "num": "第四章の４",
       "ti": "第七章の４ 灰に還る空",
       "effect": "ruin-dark",
       "paras": [
@@ -43,7 +44,7 @@ registerChapter('ep07', 'ch04', {
       ]
     },
     {
-      "num": "第四章の五",
+      "num": "第四章の５",
       "ti": "第七章の５ 先祖と、小さな地震",
       "effect": "verdant-return",
       "paras": [
@@ -55,7 +56,7 @@ registerChapter('ep07', 'ch04', {
       ]
     },
     {
-      "num": "第四章の六",
+      "num": "第四章の６",
       "ti": "第七章の６ 水神さま、と呼ぶ",
       "effect": "verdant-return",
       "paras": [
@@ -65,7 +66,7 @@ registerChapter('ep07', 'ch04', {
       ]
     },
     {
-      "num": "第四章の七",
+      "num": "第四章の７",
       "ti": "第七章の７ 知られざる真実",
       "effect": "lost-civilization",
       "paras": [

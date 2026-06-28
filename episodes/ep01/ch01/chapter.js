@@ -1,8 +1,4 @@
-/* 第一章 — このフォルダ単体で完結する章データ。
- * paras: 段落文字列。シーン区切りは scene-brk を含む文字列、
- *        挿絵は { "img": "ファイル名.png", "cap": "任意のキャプション" } を
- *        挿入したい位置に置くと img/ から読み込まれます。
- * effect: この章の演出名（effect.js で登録）。無指定なら演出なし。 */
+/* 第一章 - compacted chapter data. */
 registerChapter('ep01', 'ch01', {
   "sections": [
     {

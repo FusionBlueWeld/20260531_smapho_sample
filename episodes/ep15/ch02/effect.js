@@ -1,3 +1,5 @@
+/* Source: episodes/ep15/ch02/effect.js */
+
 /* 第二章の演出 — ゾーンの覚醒。コートを切り裂く、冷たい青の疾走線。 */
 (function () {
 

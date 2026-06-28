@@ -1,4 +1,4 @@
-/* 第五章 — このフォルダ単体で完結する章データ。 */
+/* 第五章 - compacted chapter data. */
 registerChapter('ep16', 'ch05', {
   "sections": [
     {

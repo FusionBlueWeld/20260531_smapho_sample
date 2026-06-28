@@ -1,34 +1,36 @@
-/* 第八章の演出 — コーヒー大噴水。茶色いしぶきが噴き上がり降りそそぐ。 */
+/* Source: episodes/ep10/ch12/effect.js */
+
+/* 第十二章の演出 — 衝突回避センサー。すっと寄って、ぴたりと止まる光。 */
 (function () {
 
-  // ── 噴き上がっては落ちてくる、熱々コーヒーのしぶき ──
+  // ── 障害物の手前で減速して止まる、安心感のある青緑の光 ──
   function spawn() {
     const W = window.innerWidth, H = window.innerHeight;
     return {
-      x: W * (0.42 + Math.random() * 0.16),
-      y: H * 0.62,
-      r: 1.0 + Math.random() * 2.4,
-      vx: (Math.random() - 0.5) * 3.2,
-      vy: -(3 + Math.random() * 4),
-      g: 0.12 + Math.random() * 0.08,
-      base: 0.16 + Math.random() * 0.34,
-      col: Math.random() > 0.3 ? '#7a4a28' : '#a06a3c',
+      x: -10, y: Math.random() * H,
+      tx: W * (0.6 + Math.random() * 0.28),
+      r: 0.9 + Math.random() * 1.8,
+      ease: 0.02 + Math.random() * 0.03,
+      base: 0.1 + Math.random() * 0.28,
+      phase: Math.random() * Math.PI * 2, freq: 0.01 + Math.random() * 0.02,
+      col: Math.random() > 0.5 ? '#6fe0c4' : '#8fd4ff',
     };
   }
-  registerEffect('coffee-geyser', {
-    bg: 'radial-gradient(ellipse at 50% 40%, rgba(150,90,50,.14) 0%, transparent 52%), '
-      + 'linear-gradient(170deg, #2a1c12 0%, #1f140d 55%, #140d08 100%), #0e0805',
-    step(ps, { W, H }) {
-      if (ps.length < 70 && Math.random() < 0.8) ps.push(spawn());
-      ps = ps.filter(p => p.y < H + 30 && p.x > -30 && p.x < W + 30);
-      ps.forEach(p => { p.vy += p.g; p.x += p.vx; p.y += p.vy; });
+  registerEffect('sensor-stop', {
+    bg: 'radial-gradient(ellipse at 50% 42%, rgba(110,200,190,.1) 0%, transparent 56%), '
+      + 'linear-gradient(170deg, #16261f 0%, #101c17 55%, #0a120e 100%), #070d0a',
+    step(ps) {
+      if (ps.length < 38 && Math.random() < 0.4) ps.push(spawn());
+      ps.forEach(p => { p.x += (p.tx - p.x) * p.ease; p.phase += p.freq; });
+      ps = ps.filter(p => p.tx - p.x > 1.2 || Math.random() > 0.02);
       return ps;
     },
-    draw(ctx, p) {
+    draw(ctx, p, { t }) {
+      const a = p.base * (0.5 + 0.5 * Math.sin(t * p.freq + p.phase));
       ctx.save();
-      ctx.globalAlpha = p.base;
+      ctx.globalAlpha = a;
       ctx.fillStyle = p.col;
-      ctx.shadowColor = '#5a3418'; ctx.shadowBlur = 4;
+      ctx.shadowColor = p.col; ctx.shadowBlur = 7;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     },

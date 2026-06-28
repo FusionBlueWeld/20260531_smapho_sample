@@ -1,41 +1,36 @@
-/* 第四章の演出。 */
+/* Source: episodes/ep08/ch05/effect.js */
+
+/* 第五章の演出。 */
 (function () {
 
-  // ── 謎の天才扱い：村人の「うおおお！」に合わせて弾(はじ)ける金の星屑(ほしくず) ──
+  // ── 「アあーぱッ！」やけどコメディ：地から弾ける、赤くポップな熱の粒 ──
   function spawn() {
     const W = window.innerWidth, H = window.innerHeight;
     return {
-      x: Math.random() * W, y: H * 0.3 + Math.random() * H * 0.7,
-      r: 0.6 + Math.random() * 1.9,
-      vx: -0.08 + Math.random() * 0.16, vy: -0.05 - Math.random() * 0.14,
-      base: 0.1 + Math.random() * 0.26,
-      twk: 0.02 + Math.random() * 0.06,
-      phase: Math.random() * Math.PI * 2, freq: 0.02 + Math.random() * 0.05,
+      x: Math.random() * W, y: H + 8 + Math.random() * 24,
+      r: 1.0 + Math.random() * 2.4,
+      vx: -0.2 + Math.random() * 0.4, vy: -0.5 - Math.random() * 0.9,
+      base: 0.1 + Math.random() * 0.25,
+      life: 0, ttl: 60 + Math.random() * 60,
+      phase: Math.random() * Math.PI * 2, freq: 0.04 + Math.random() * 0.08,
     };
   }
-  registerEffect('genius-sparkle', {
-    bg: 'radial-gradient(ellipse at 50% 70%, rgba(255,210,110,.12) 0%, transparent 56%), '
-      + 'linear-gradient(170deg, #4a3a18 0%, #2f2510 55%, #1d1709 100%), #141009',
+  registerEffect('ouch-heat', {
+    bg: 'radial-gradient(ellipse at 50% 92%, rgba(230,110,70,.14) 0%, transparent 55%), '
+      + 'linear-gradient(170deg, #4a2a1c 0%, #301810 55%, #1d0f09 100%), #140a06',
     step(ps, { W, H }) {
-      if (ps.length < 50 && Math.random() < 0.55) ps.push(spawn());
-      ps = ps.filter(p => p.y > -20);
-      ps.forEach(p => { p.x += p.vx + Math.sin(p.phase) * 0.1; p.y += p.vy; p.phase += p.freq; });
+      if (ps.length < 44 && Math.random() < 0.6) ps.push(spawn());
+      ps = ps.filter(p => p.life < p.ttl && p.y > -20);
+      ps.forEach(p => { p.x += p.vx + Math.sin(p.phase) * 0.25; p.y += p.vy; p.vy *= 0.985; p.phase += p.freq; p.life++; });
       return ps;
     },
-    draw(ctx, p, { t }) {
-      // チカチカ瞬く星
-      const tw = 0.3 + 0.7 * Math.abs(Math.sin(t * p.freq + p.phase));
+    draw(ctx, p) {
+      const k = 1 - p.life / p.ttl;
       ctx.save();
-      ctx.globalAlpha = p.base * tw;
-      ctx.fillStyle = '#ffd869';
-      ctx.shadowColor = '#ffcf4a'; ctx.shadowBlur = 5;
-      const r = p.r;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y - r * 1.8); ctx.lineTo(p.x + r * 0.5, p.y - r * 0.5);
-      ctx.lineTo(p.x + r * 1.8, p.y); ctx.lineTo(p.x + r * 0.5, p.y + r * 0.5);
-      ctx.lineTo(p.x, p.y + r * 1.8); ctx.lineTo(p.x - r * 0.5, p.y + r * 0.5);
-      ctx.lineTo(p.x - r * 1.8, p.y); ctx.lineTo(p.x - r * 0.5, p.y - r * 0.5);
-      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = p.base * k;
+      ctx.fillStyle = p.r > 2 ? '#ff8a4a' : '#ffc24a';
+      ctx.shadowColor = '#ff7034'; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (0.6 + 0.4 * k), 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     },
   });

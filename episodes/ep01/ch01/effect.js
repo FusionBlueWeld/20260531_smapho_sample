@@ -1,3 +1,5 @@
+/* Source: episodes/ep01/ch01/effect.js */
+
 /* 第一章の演出。各セクションが effect 名で参照する。
  * registerEffect(name, { bg, step, draw }) でエンジンに登録する：
  *   bg   … body に適用する background ショートハンド文字列（null で無背景）

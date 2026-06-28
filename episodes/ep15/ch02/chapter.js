@@ -1,4 +1,4 @@
-/* 第二章 — このフォルダ単体で完結する章データ。 */
+/* 第二章 - compacted chapter data. */
 registerChapter('ep15', 'ch02', {
   "sections": [
     {

@@ -1,3 +1,5 @@
+/* Source: episodes/ep14/ch05/effect.js */
+
 /* 第五章の演出 — 粉モン外交。温かな湯気に舞う、鰹節のような金色の薄片。 */
 (function () {
 

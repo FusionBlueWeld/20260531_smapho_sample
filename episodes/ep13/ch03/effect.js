@@ -1,3 +1,5 @@
+/* Source: episodes/ep13/ch03/effect.js */
+
 /* 第三章の演出 — 川辺に激しさを増す雨。水面に生まれては消える波紋。 */
 (function () {
 

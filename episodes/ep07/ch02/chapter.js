@@ -1,7 +1,8 @@
+/* 第二章 - compacted chapter data. */
 registerChapter('ep07', 'ch02', {
   "sections": [
     {
-      "num": "第二章の一",
+      "num": "第二章の１",
       "ti": "白蛇と祭礼",
       "effect": "doubt-haze",
       "paras": [
@@ -13,7 +14,7 @@ registerChapter('ep07', 'ch02', {
       ]
     },
     {
-      "num": "第二章の二",
+      "num": "第二章の２",
       "ti": "第三章の２ 小さな波紋",
       "effect": "doubt-haze",
       "paras": [
@@ -24,7 +25,7 @@ registerChapter('ep07', 'ch02', {
       ]
     },
     {
-      "num": "第二章の三",
+      "num": "第二章の３",
       "ti": "第四章の１ 欠けた月の下で",
       "effect": "moon-river",
       "paras": [
@@ -38,7 +39,7 @@ registerChapter('ep07', 'ch02', {
       ]
     },
     {
-      "num": "第二章の四",
+      "num": "第二章の４",
       "ti": "第四章の２ 響かぬ祭り",
       "effect": "hollow-festival",
       "paras": [

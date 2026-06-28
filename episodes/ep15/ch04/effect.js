@@ -1,3 +1,5 @@
+/* Source: episodes/ep15/ch04/effect.js */
+
 /* 第四章の演出 — 逆転のブザー。極限まで加速した残像が、時を引き裂く。 */
 (function () {
 

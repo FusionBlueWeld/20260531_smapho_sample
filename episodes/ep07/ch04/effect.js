@@ -1,3 +1,5 @@
+/* Source: episodes/ep07/ch04/effect.js */
+
 /* Effects from ep07/ch07. */
 /* 第七章の演出（3種）。 */
 (function () {
