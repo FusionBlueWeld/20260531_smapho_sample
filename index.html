@@ -315,7 +315,10 @@
     #jump::-webkit-scrollbar { display: none; }
 
     /* 章グループ（ボタン＋インライン展開） */
-    .chap-group { display: inline-flex; align-items: center; flex-shrink: 0; }
+    .chap-group {
+      display: inline-flex; align-items: center; flex-shrink: 0;
+      padding: 0 10px 7px 0;
+    }
     .chap-expand {
       overflow: hidden; width: 0;
       /* transition は JS で設定 */
@@ -330,6 +333,7 @@
       color: rgba(255,255,255,.62); cursor: pointer; letter-spacing: .06em;
       transition: background .18s, color .18s, border-color .18s, transform .14s;
       touch-action: manipulation; flex-shrink: 0; white-space: nowrap;
+      isolation: isolate;
     }
     .jb:hover { background: rgba(255,255,255,.15); color: #fff; }
     .jb:active { transform: scale(.94); }
@@ -817,6 +821,7 @@ function loadEpisode(idx) {
   busy = false; openChap = null;
   build(); buildJump(); buildEpSel();
   cur = 0;
+  jumpEl.scrollLeft = 0;
   pg2.style.display = 'none';
   render(pg, 0); ui();
   updateEffects();
