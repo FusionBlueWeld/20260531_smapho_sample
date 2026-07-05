@@ -8,6 +8,10 @@ registerEpisode('ep15', {
     "sub": "残り、ほんの少し。<br>10点のリードと、<br>消えない問い。",
     "pub": "AI文庫",
     "shelf": { "spine": "#c0451f", "accent": "#ffe8c0" },
+    "frontispiece": {
+      "src": "episodes/ep15/img/frontispiece.png",
+      "alt": "ラスト1分12秒　抽象挿絵"
+    },
     "cover": {
       "bg": "linear-gradient(160deg, #d4541f 0%, #5a1e0a 55%, #b8401a 100%)",
       "frame": "rgba(255,210,150,.45)", "frame2": "rgba(255,210,150,.2)",
