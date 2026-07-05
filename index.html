@@ -249,6 +249,22 @@
       margin: 0 .1em; letter-spacing: .02em;
     }
 
+    /* ── Frontispiece (表紙裏の中扉挿絵) ───────────── */
+    .t-frontispiece .pbody {
+      inset: 0;
+      writing-mode: horizontal-tb;
+      display: flex; align-items: center; justify-content: center;
+      padding: 28px 24px;
+    }
+    .frontispiece-img {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 18px rgba(21, 44, 39, .16));
+    }
+
     /* ── Scene backgrounds ──────────────────────────── */
     /* The body background is set dynamically (inline) per section by the
        effect engine; the gradients live in each chapter's effect.js. */
@@ -698,6 +714,16 @@ function build() {
 
   PAGES.push({ t: 'cover', slot: 'center' });
   SECTIONS.push({ label: '表紙', start: 0, end: 0 });
+  if (BOOK.frontispiece && BOOK.frontispiece.src) {
+    const frontispieceIndex = PAGES.length;
+    PAGES.push({
+      t: 'frontispiece',
+      src: BOOK.frontispiece.src,
+      alt: BOOK.frontispiece.alt || BOOK.title || '',
+      slot: 'center',
+    });
+    SECTIONS.push({ label: '口絵', start: frontispieceIndex, end: frontispieceIndex });
+  }
 
   for (const ch of CHAPTERS) {
     const start = PAGES.length;
@@ -789,6 +815,13 @@ function render(el, i) {
       <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
       <div class="pbody"><span class="scene-brk">◇　◇　◇</span></div>
       <div class="pftr"></div>`;
+
+  } else if (d.t === 'frontispiece') {
+    el.innerHTML = `
+      <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
+      <div class="pbody">
+        <img class="frontispiece-img" src="${d.src}" alt="${d.alt}" loading="lazy">
+      </div>`;
 
   } else if (d.t === 'img') {
     el.innerHTML = `

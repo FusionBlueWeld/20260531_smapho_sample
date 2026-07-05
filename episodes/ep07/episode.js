@@ -7,6 +7,10 @@ registerEpisode('ep07', {
     "genre": "ＳＦ",
     "sub": "踏み鳴らす祈りの<br>その地の底で<br>鉄が静かに脈打っている",
     "pub": "AI文庫",
+    "frontispiece": {
+      "src": "episodes/ep07/img/frontispiece.png",
+      "alt": "水神の鼓動　抽象挿絵"
+    },
     "shelf": { "spine": "#1c2a2e", "accent": "#7fd0c0" },
     "cover": {
       "bg": "linear-gradient(160deg, #1c3430 0%, #0a1816 55%, #182e2a 100%)",
