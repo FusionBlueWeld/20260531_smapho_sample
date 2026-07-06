@@ -1,0 +1,10 @@
+# Local workspace / agent context
+AGENTS.md
+.agents/
+.codex/
+docs/
+tools/
+episodes/README.md
+
+# Quarantine for files removed from the deployable app
+delete/
