@@ -7,6 +7,10 @@ registerEpisode('ep09', {
     "genre": "ＳＦ",
     "sub": "二三時一七分、<br>素数の間隔が<br>空間を折りたたむ",
     "pub": "AI文庫",
+    "frontispiece": {
+      "src": "episodes/ep09/img/frontispiece.png",
+      "alt": "素数の檻 抽象口絵"
+    },
     "shelf": { "spine": "#1a1730", "accent": "#9ad0ff" },
     "cover": {
       "bg": "linear-gradient(160deg, #241b3c 0%, #0b0918 55%, #1a1430 100%)",
