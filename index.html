@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>AI文庫</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,10 +12,10 @@
       margin: 0; padding: 0; box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
-    html, body { height: 100%; overflow: hidden; }
+    html, body { height: 100%; min-height: 100%; overflow: hidden; }
     body {
       --w: min(88vw, 420px);
-      --h: min(calc(var(--w) * 1.52), calc(100dvh - 130px));
+      --h: min(calc(var(--w) * 1.52), 100%);
       font-family: 'Noto Serif JP','Yu Mincho','游明朝','Hiragino Mincho ProN',
                    'Hiragino Mincho Pro',serif;
       display: flex; flex-direction: column;
@@ -34,10 +34,20 @@
     }
 
     /* ── Book scene ──────────────────────────────── */
-    #scene { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    #scene {
+      width: 100%; height: 100dvh; min-height: 0;
+      display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto;
+      justify-items: center; align-items: center;
+      gap: clamp(6px, 1.5dvh, 14px);
+      padding: max(8px, env(safe-area-inset-top)) 0
+               max(8px, env(safe-area-inset-bottom));
+    }
 
     /* single-page wrapper */
-    #pw { position: relative; width: var(--w); height: var(--h); overflow: hidden; }
+    #pw {
+      position: relative; width: var(--w); height: var(--h); max-height: 100%;
+      overflow: hidden; touch-action: pan-y;
+    }
 
     /* ── The Page ────────────────────────────────── */
     .page {
@@ -109,6 +119,7 @@
     .slot-right  .pbody { right: 8px; left: 24px; }
     .slot-center .pbody { left: 12px; right: 12px; }
     .pbody p { margin: 0; }
+    .pbody, .pbody * { user-select: text; -webkit-user-select: text; }
 
     /* ── Cover ───────────────────────────────────── */
     /* Cover colours are driven by per-book CSS variables (set inline from
@@ -297,13 +308,10 @@
     .slideInRight  { animation: slideInRight  .32s ease-out forwards; }
 
     /* ── Tap zones ───────────────────────────────── */
-    .tz { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: pointer; }
-    #tzl { left: 0; } #tzr { right: 0; }
-
     /* ── Navigation ─────────────────────────────── */
     #nav { display: flex; align-items: center; gap: 16px; }
     .nb {
-      width: 38px; height: 38px; border-radius: 50%;
+      width: 44px; height: 44px; border-radius: 50%;
       background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
       color: rgba(255,255,255,.62); font-size: 16px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -349,7 +357,7 @@
       color: rgba(255,255,255,.62); cursor: pointer; letter-spacing: .06em;
       transition: background .18s, color .18s, border-color .18s, transform .14s;
       touch-action: manipulation; flex-shrink: 0; white-space: nowrap;
-      isolation: isolate;
+      isolation: isolate; min-height: 44px;
     }
     .jb:hover { background: rgba(255,255,255,.15); color: #fff; }
     .jb:active { transform: scale(.94); }
@@ -382,7 +390,7 @@
       background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.11);
       color: rgba(255,255,255,.5); cursor: pointer; letter-spacing: .05em;
       transition: background .16s, color .16s, border-color .16s, transform .14s;
-      touch-action: manipulation; flex-shrink: 0; white-space: nowrap;
+      touch-action: manipulation; flex-shrink: 0; white-space: nowrap; min-height: 44px;
     }
     .sb:hover { background: rgba(255,255,255,.13); color: rgba(255,255,255,.85); }
     .sb:active { transform: scale(.93); }
@@ -395,7 +403,7 @@
       font: inherit; font-size: 10px; padding: 4px 10px; border-radius: 14px;
       background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10);
       color: rgba(255,255,255,.45); cursor: pointer; letter-spacing: .06em;
-      transition: all .18s; touch-action: manipulation;
+      transition: all .18s; touch-action: manipulation; min-height: 44px;
     }
     .epb:hover { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
     .epb.on { background: rgba(100,160,220,.18); border-color: rgba(100,160,220,.45); color: #a8c8e8; }
@@ -431,6 +439,7 @@
     }
     .spine {
       position: relative; width: 50px; height: 190px;
+      padding: 0; border: 0; font: inherit;
       border-radius: 2px 4px 4px 2px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 3px 4px 10px rgba(0,0,0,.55), inset -3px 0 6px rgba(0,0,0,.35),
@@ -444,6 +453,9 @@
       box-shadow: 0 162px 0 rgba(255,255,255,.18);
     }
     .spine:hover, .spine:focus { transform: translateY(-8px); box-shadow: 4px 10px 18px rgba(0,0,0,.6); }
+    .spine:focus-visible, button:focus-visible {
+      outline: 3px solid rgba(235,205,120,.9); outline-offset: 3px;
+    }
     .spine.opening { transform: translateY(-14px) scale(1.06); }
     .spine-title {
       writing-mode: vertical-rl; text-orientation: mixed;
@@ -457,17 +469,35 @@
       font-size: 8.5px; letter-spacing: .08em; opacity: .72;
       white-space: nowrap; overflow: hidden;
     }
+    .spine-progress {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
+      background: rgba(0,0,0,.28); overflow: hidden;
+    }
+    .spine-progress > span {
+      display: block; height: 100%; background: currentColor; opacity: .88;
+    }
     #shelf, #scene { transition: opacity .3s ease; }
     .fade-out { opacity: 0; }
 
+    #ep-sel, #nav, #jump-wrap { transition: opacity .2s ease; }
+    #scene.chrome-hidden #ep-sel,
+    #scene.chrome-hidden #nav,
+    #scene.chrome-hidden #jump-wrap { opacity: 0; pointer-events: none; }
+
     /* ── Swipe hint ──────────────────────────────── */
     #hint {
-      position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%);
+      position: absolute; left: 50%; bottom: 8px; z-index: 12; transform: translateX(-50%);
       font-size: 9.5px; color: rgba(255,255,255,.45); letter-spacing: .12em;
-      white-space: nowrap; pointer-events: none;
+      white-space: nowrap; pointer-events: none; padding: 4px 8px; border-radius: 10px;
+      background: rgba(15,8,3,.55);
       animation: hintfade 4s ease forwards;
     }
     @keyframes hintfade { 0%{opacity:0} 18%{opacity:1} 75%{opacity:1} 100%{opacity:0} }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; }
+      .slideOutRight, .slideInLeft, .slideOutLeft, .slideInRight { animation-duration: .01ms !important; }
+      #hint { animation: none; opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -489,9 +519,7 @@
   <div id="pw">
     <div id="pg2" class="page" style="display:none"></div>
     <div id="pg"  class="page"></div>
-    <div class="tz" id="tzl"></div>
-    <div class="tz" id="tzr"></div>
-    <div id="hint">タップ／スワイプでめくる</div>
+    <div id="hint">左右タップ／スワイプ・中央でメニュー</div>
   </div>
   <div id="nav">
     <button class="nb" id="bnp" onclick="go(-1)" aria-label="前のページ">‹</button>
@@ -518,15 +546,21 @@ const CHAPTERS_DATA = {};    // "epId/chId"   → { sections: [...] }
 const EFFECTS = {};          // effect name   → { bg, step, draw }
 window.registerEpisode = (id, data) => { EPISODES[id] = data; };
 window.registerChapter = (epId, chId, data) => { CHAPTERS_DATA[epId + '/' + chId] = data; };
-window.registerEffect  = (name, def) => { EFFECTS[name] = def; };
+window.registerEffect  = (name, def) => {
+  const scope = document.currentScript && document.currentScript.dataset.effectScope;
+  const key = scope ? `${scope}/${name}` : name;
+  if (EFFECTS[key]) console.warn(`Duplicate effect registration: ${key}`);
+  EFFECTS[key] = def;
+};
 
 // ─── Dynamic loader ───────────────────────────
 // Inject a <script> (works on file:// too, unlike fetch). Resolves even on
 // 404 so an optional effect.js can simply be absent.
-function loadScript(src) {
+function loadScript(src, effectScope = '') {
   return new Promise(res => {
     const s = document.createElement('script');
     s.src = src; s.async = false;
+    if (effectScope) s.dataset.effectScope = effectScope;
     s.onload = () => res(true);
     s.onerror = () => res(false);
     document.head.appendChild(s);
@@ -558,7 +592,9 @@ async function ensureEpisodeLoaded(idx) {
   await Promise.all(epm.chapters.flatMap(c => {
     const chId = (typeof c === 'string') ? c : c.id;
     const jobs = [loadScript(`episodes/${epm.id}/${chId}/chapter.js`)];
-    if (typeof c === 'object' && c.fx) jobs.push(loadScript(`episodes/${epm.id}/${chId}/effect.js`));
+    if (typeof c === 'object' && c.fx) {
+      jobs.push(loadScript(`episodes/${epm.id}/${chId}/effect.js`, epm.id));
+    }
     return jobs;
   }));
   const chapters = [];
@@ -567,7 +603,12 @@ async function ensureEpisodeLoaded(idx) {
     const data = CHAPTERS_DATA[epm.id + '/' + chId];
     if (!data) continue;
     const base = `episodes/${epm.id}/${chId}/`;
-    for (const sec of data.sections) { sec._base = base; chapters.push(sec); }
+    data.sections.forEach((sec, sectionIndex) => {
+      sec._base = base;
+      sec._key = `${epm.id}/${chId}/${sectionIndex}`;
+      sec._effectKey = sec.effect ? `${epm.id}/${sec.effect}` : null;
+      chapters.push(sec);
+    });
   }
   ep.chapters = chapters;
   ep.loaded = true;
@@ -591,6 +632,52 @@ let BOOK = {}, CHAPTERS = [];
 let PAGES = [], SECTIONS = [], GROUPS = [];
 let cur = 0, busy = false, booted = false, currentEpIdx = 0, openChap = null;
 let appMode = 'shelf';
+const PROGRESS_KEY = 'ai-bunko-reader-progress-v1';
+
+function readProgressMap() {
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+
+function writeProgressMap(map) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(map)); }
+  catch (_) { /* Private mode/storage denial must not stop reading. */ }
+}
+
+function pageAnchor(i = cur) {
+  return PAGES[i] && PAGES[i].anchor ? { ...PAGES[i].anchor } : null;
+}
+
+function saveProgress() {
+  const ep = window.EPISODE_REGISTRY[currentEpIdx];
+  const anchor = pageAnchor();
+  if (!ep || !anchor || !PAGES.length) return;
+  const map = readProgressMap();
+  map[ep.id] = {
+    anchor,
+    percent: PAGES.length > 1 ? Math.round(cur / (PAGES.length - 1) * 100) : 0,
+    updatedAt: Date.now(),
+  };
+  writeProgressMap(map);
+}
+
+function findPageByAnchor(anchor) {
+  if (!anchor || !anchor.sectionKey) return 0;
+  const candidates = PAGES.map((page, index) => ({ page, index }))
+    .filter(({ page }) => page.anchor && page.anchor.sectionKey === anchor.sectionKey);
+  if (!candidates.length) return 0;
+  const target = (anchor.paraIndex + 1) * 1000000 + (anchor.charOffset || 0);
+  let best = candidates[0], bestDistance = Infinity;
+  for (const candidate of candidates) {
+    const a = candidate.page.anchor;
+    const value = (a.paraIndex + 1) * 1000000 + (a.charOffset || 0);
+    const distance = Math.abs(value - target);
+    if (distance < bestDistance || (distance === bestDistance && value <= target)) {
+      best = candidate; bestDistance = distance;
+    }
+  }
+  return best.index;
+}
 
 // ─── Particle / atmosphere engine ────────────
 // Generic plumbing only. Concrete effects (sakura, rays, …) are registered
@@ -664,14 +751,14 @@ function updateEffects() {
   const d = PAGES[cur];
   if (d.t === 'cover' || d.t === 'col') { setScene(null); return; }
   const sec = sectionOf(cur);
-  setScene(sec ? sec.effect : null);
+  setScene(sec ? sec.effectKey : null);
 }
 
 // ─── Auto-pagination ──────────────────────────
 function paginate(paras, mb) {
   const out = [];
   let buf = [];
-  const setb = a => { mb.innerHTML = a.map(x => `<p>${x}</p>`).join(''); };
+  const setb = a => { mb.innerHTML = a.map(x => `<p>${x.text}</p>`).join(''); };
   const fits = () => mb.scrollWidth <= mb.clientWidth + 1;
 
   for (const para of paras) {
@@ -680,18 +767,26 @@ function paginate(paras, mb) {
     buf.pop();
     if (buf.length) { out.push(buf); buf = []; }
 
-    let rem = para;
-    while (rem.length) {
-      setb([rem]);
-      if (fits()) { buf = [rem]; break; }
-      let lo = 1, hi = rem.length, best = 1;
+    let remText = para.text;
+    let remStart = para.start;
+    while (remText.length) {
+      const remainder = { ...para, text: remText, start: remStart, end: remStart + remText.length };
+      setb([remainder]);
+      if (fits()) { buf = [remainder]; break; }
+      let lo = 1, hi = remText.length, best = 1;
       while (lo <= hi) {
         const mid = (lo + hi) >> 1;
-        setb([rem.slice(0, mid)]);
+        setb([{ ...para, text: remText.slice(0, mid) }]);
         if (fits()) { best = mid; lo = mid + 1; } else hi = mid - 1;
       }
-      out.push([rem.slice(0, best)]);
-      rem = rem.slice(best);
+      out.push([{
+        ...para,
+        text: remText.slice(0, best),
+        start: remStart,
+        end: remStart + best,
+      }]);
+      remText = remText.slice(best);
+      remStart += best;
     }
   }
   if (buf.length) out.push(buf);
@@ -712,8 +807,8 @@ function build() {
   PAGES = []; SECTIONS = [];
   let pn = 0;
 
-  PAGES.push({ t: 'cover', slot: 'center' });
-  SECTIONS.push({ label: '表紙', start: 0, end: 0 });
+  PAGES.push({ t: 'cover', slot: 'center', anchor: { sectionKey: 'cover', paraIndex: -1, charOffset: 0 } });
+  SECTIONS.push({ label: '表紙', start: 0, end: 0, key: 'cover', effectKey: null });
   if (BOOK.frontispiece && BOOK.frontispiece.src) {
     const frontispieceIndex = PAGES.length;
     PAGES.push({
@@ -721,38 +816,58 @@ function build() {
       src: BOOK.frontispiece.src,
       alt: BOOK.frontispiece.alt || BOOK.title || '',
       slot: 'center',
+      anchor: { sectionKey: 'frontispiece', paraIndex: -1, charOffset: 0 },
     });
-    SECTIONS.push({ label: '口絵', start: frontispieceIndex, end: frontispieceIndex });
+    SECTIONS.push({ label: '口絵', start: frontispieceIndex, end: frontispieceIndex, key: 'frontispiece', effectKey: null });
   }
 
   for (const ch of CHAPTERS) {
     const start = PAGES.length;
     const lb = `${ch.num}　${ch.ti}`;
-    pn++; PAGES.push({ t: 'ch', ch: ch.num, ti: ch.ti, lb, pn });
+    const sectionKey = ch._key || ch.num;
+    pn++; PAGES.push({
+      t: 'ch', ch: ch.num, ti: ch.ti, lb, pn,
+      anchor: { sectionKey, paraIndex: -1, charOffset: 0 },
+    });
     let seg = [];
     const flush = () => {
       if (!seg.length) return;
-      for (const ps of paginate(seg, mb)) { pn++; PAGES.push({ t: 'tx', ps, lb, pn }); }
+      for (const ps of paginate(seg, mb)) {
+        const first = ps[0];
+        pn++; PAGES.push({
+          t: 'tx', ps, lb, pn,
+          anchor: { sectionKey, paraIndex: first.paraIndex, charOffset: first.start },
+        });
+      }
       seg = [];
     };
-    for (const para of ch.paras) {
+    ch.paras.forEach((para, paraIndex) => {
       if (para && typeof para === 'object' && para.img) {
         flush();
-        pn++; PAGES.push({ t: 'img', src: (ch._base || '') + 'img/' + para.img, cap: para.cap || '', lb, pn, slot: 'center' });
+        pn++; PAGES.push({
+          t: 'img', src: (ch._base || '') + 'img/' + para.img, cap: para.cap || '', lb, pn, slot: 'center',
+          anchor: { sectionKey, paraIndex, charOffset: 0 },
+        });
       } else if (para.includes('scene-brk')) {
         flush();
-        PAGES.push({ t: 'brk', lb, slot: 'center' });
+        PAGES.push({
+          t: 'brk', lb, slot: 'center',
+          anchor: { sectionKey, paraIndex, charOffset: 0 },
+        });
       } else {
-        seg.push(para);
+        seg.push({ text: para, paraIndex, start: 0, end: para.length });
       }
-    }
+    });
     flush();
-    SECTIONS.push({ label: ch.num, start, end: PAGES.length - 1, effect: ch.effect || null });
+    SECTIONS.push({
+      label: ch.num, start, end: PAGES.length - 1,
+      key: sectionKey, effectKey: ch._effectKey || null,
+    });
   }
 
   const ci = PAGES.length;
-  PAGES.push({ t: 'col', slot: 'center' });
-  SECTIONS.push({ label: '奥付', start: ci, end: ci });
+  PAGES.push({ t: 'col', slot: 'center', anchor: { sectionKey: 'colophon', paraIndex: -1, charOffset: 0 } });
+  SECTIONS.push({ label: '奥付', start: ci, end: ci, key: 'colophon', effectKey: null });
 
   pw.removeChild(mp);
 
@@ -806,7 +921,7 @@ function render(el, i) {
     el.innerHTML = `
       <div class="pbg"></div><div class="psp"></div><div class="pedge"></div>
       <div class="phdr"><span class="phdr-ch">${d.lb}</span><span class="phdr-bk">${BOOK.title}</span></div>
-      <div class="pbody">${d.ps.map(p => `<p>${p}</p>`).join('')}</div>
+      <div class="pbody">${d.ps.map(p => `<p>${p.text}</p>`).join('')}</div>
       <div class="pftr"><span class="pnum">${d.pn}</span></div>`;
 
   } else if (d.t === 'brk') {
@@ -853,10 +968,11 @@ function loadEpisode(idx) {
   BOOK = ep.book; CHAPTERS = ep.chapters;
   busy = false; openChap = null;
   build(); buildJump(); buildEpSel();
-  cur = 0;
+  const saved = readProgressMap()[ep.id];
+  cur = saved ? findPageByAnchor(saved.anchor) : 0;
   jumpEl.scrollLeft = 0;
   pg2.style.display = 'none';
-  render(pg, 0); ui();
+  render(pg, cur); ui();
   updateEffects();
 }
 
@@ -902,21 +1018,26 @@ function coverTitleFont(title) {
 
 function buildShelf() {
   const reg = window.EPISODE_REGISTRY;
+  const progress = readProgressMap();
   rackEl.innerHTML = reg.map((ep, i) => {
     const b = ep.book || {};
     const title = b.title || ep.label || `作品${i + 1}`;
     const author = b.author || '';
+    const percent = Math.max(0, Math.min(100, progress[ep.id]?.percent || 0));
+    const progressLabel = percent > 0 ? `、読了率${percent}%` : '';
     return (
-      `<div class="spine" role="button" tabindex="0" data-idx="${i}" ` +
+      `<button type="button" class="spine" data-idx="${i}" aria-label="${title} ${author}${progressLabel}" ` +
         `style="background:${spineColor(b)};color:${spineAccent(b)}">` +
         `<span class="spine-title" style="font-size:${spineTitleFont(title)}px">${title}</span>` +
         (author ? `<span class="spine-author">${author}</span>` : '') +
-      `</div>`
+        (percent > 0 ? `<span class="spine-progress" aria-hidden="true"><span style="width:${percent}%"></span></span>` : '') +
+      `</button>`
     );
   }).join('');
 }
 
 function showShelf() {
+  if (appMode === 'reader') saveProgress();
   appMode = 'shelf';
   setScene(null);                 // clear reader background + particles
   sceneEl.style.display = 'none';
@@ -946,15 +1067,10 @@ async function openBook(idx) {
 }
 window.openBook = openBook;
 
-// Spine activation (tap / keyboard) via delegation.
+// Spine activation via delegation; native buttons provide keyboard support.
 rackEl.addEventListener('click', e => {
   const sp = e.target.closest('.spine');
   if (sp) openBook(+sp.dataset.idx);
-});
-rackEl.addEventListener('keydown', e => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const sp = e.target.closest('.spine');
-  if (sp) { e.preventDefault(); openBook(+sp.dataset.idx); }
 });
 
 // ─── Navigation helpers ───────────────────────
@@ -980,6 +1096,7 @@ function navigate(target, dir) {
   const inClass  = dir >= 0 ? 'slideInLeft'   : 'slideInRight';
 
   cur = target;
+  saveProgress();
   render(pg2, cur);
   pg2.style.display = '';
   pg2.offsetHeight;
@@ -1161,21 +1278,39 @@ function scrollJumpToActiveChapter() {
 }
 
 // ─── Input ────────────────────────────────────
-document.getElementById('tzl').addEventListener('click', () => go(-1));
-document.getElementById('tzr').addEventListener('click', () => go(1));
 jumpEl.addEventListener('scroll', () => updateFade(jumpWrap, jumpEl), { passive: true });
 
-let sx = 0, sy = 0;
-pw.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
-pw.addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx > 0 ? 1 : -1);
-}, { passive: true });
+let gesture = null;
+pw.addEventListener('pointerdown', e => {
+  if (!e.isPrimary || e.button !== 0) return;
+  gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now() };
+});
+pw.addEventListener('pointercancel', () => { gesture = null; });
+pw.addEventListener('pointerup', e => {
+  if (!gesture || gesture.id !== e.pointerId) return;
+  const start = gesture; gesture = null;
+  const dx = e.clientX - start.x, dy = e.clientY - start.y;
+  const selection = window.getSelection && window.getSelection();
+  if (selection && !selection.isCollapsed && selection.toString().trim()) return;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+    go(dx > 0 ? 1 : -1);
+    return;
+  }
+  if (Math.hypot(dx, dy) > 12 || performance.now() - start.at > 500) return;
+  const r = pw.getBoundingClientRect();
+  const position = (e.clientX - r.left) / r.width;
+  if (position < .34) go(-1);
+  else if (position > .66) go(1);
+  else sceneEl.classList.toggle('chrome-hidden');
+});
 
 document.addEventListener('keydown', e => {
+  if (appMode !== 'reader') return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
 });
+
+window.addEventListener('pagehide', saveProgress);
 
 window.addEventListener('resize', () => {
   if (effectActive) { sakura.width = window.innerWidth; sakura.height = window.innerHeight; }
@@ -1199,10 +1334,11 @@ window.addEventListener('resize', () => {
   if (!booted || appMode !== 'reader') return;
   clearTimeout(rz);
   rz = setTimeout(() => {
-    const si = SECTIONS.indexOf(sectionOf(cur));
+    const anchor = pageAnchor();
     build(); buildJump();
-    cur = SECTIONS[Math.min(si, SECTIONS.length - 1)].start;
+    cur = findPageByAnchor(anchor);
     render(pg, cur); ui();
+    updateEffects();
   }, 250);
 });
 </script>
