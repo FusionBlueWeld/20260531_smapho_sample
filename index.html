@@ -223,10 +223,12 @@
     .cvr-genre { font-size: min(2.6vw, 10px); color: var(--cv-genre); letter-spacing: .4em; opacity: .85; }
     .cvr-titles { display: flex; gap: 14px; align-items: center; }
     .cvr-title {
-      writing-mode: vertical-rl; font-size: min(12vw, 48px); font-weight: 700;
+      display: flex; flex-direction: row-reverse; align-items: center; gap: .18em;
+      font-size: min(12vw, 48px); font-weight: 700;
       color: var(--cv-title); letter-spacing: .22em; line-height: 1.25;
       text-shadow: 0 2px 16px rgba(0,0,0,.8), 0 0 40px var(--cv-glow);
     }
+    .cvr-title-col { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; }
     .cvr-sub {
       writing-mode: vertical-rl; font-size: min(3.4vw, 13px); color: var(--cv-sub);
       letter-spacing: .16em; opacity: .85; line-height: 1.75;
@@ -414,59 +416,100 @@
     #shelf {
       display: none; position: fixed; inset: 0; z-index: 40;
       overflow-y: auto; -webkit-overflow-scrolling: touch;
-      padding: max(28px, env(safe-area-inset-top)) 16px 40px;
+      scrollbar-width: none;
+      padding: max(24px, env(safe-area-inset-top)) 12px 48px;
+      background-color: #170b06;
+      background-image:
+        radial-gradient(ellipse at 52% 12%, rgba(185,104,48,.18), transparent 42%),
+        linear-gradient(90deg, rgba(0,0,0,.3), transparent 16%, transparent 84%, rgba(0,0,0,.36)),
+        repeating-linear-gradient(88deg, transparent 0 13px, rgba(255,206,130,.012) 13px 14px),
+        repeating-linear-gradient(92deg, transparent 0 31px, rgba(0,0,0,.055) 31px 33px),
+        linear-gradient(180deg, #21100a, #120805 62%, #0c0503);
+    }
+    #shelf::-webkit-scrollbar { display: none; }
+    #shelf::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 5;
+      box-shadow: inset 0 0 70px 22px rgba(0,0,0,.56);
+      background: linear-gradient(90deg, rgba(0,0,0,.18), transparent 20% 80%, rgba(0,0,0,.22));
     }
     #shelf.visible { display: block; }
-    #shelf-head { text-align: center; margin: 8px 0 26px; }
+    #shelf-head { position: relative; z-index: 6; text-align: center; margin: 8px 0 20px; }
     #shelf-title {
-      font-size: min(7vw, 28px); font-weight: 700; color: #f0e6d2;
-      letter-spacing: .3em; text-shadow: 0 2px 14px rgba(0,0,0,.6);
+      font-size: clamp(25px, 7vw, 32px); font-weight: 700; color: #f3e6cc;
+      letter-spacing: .32em; padding-left: .32em;
+      text-shadow: 0 2px 2px #050201, 0 0 22px rgba(224,151,83,.24);
     }
     #shelf-sub {
       margin-top: 8px; font-size: min(3vw, 11px);
-      color: rgba(240,230,210,.5); letter-spacing: .18em;
+      color: rgba(238,218,190,.58); letter-spacing: .18em;
     }
     #shelf-rack {
-      display: flex; flex-wrap: wrap; justify-content: center;
-      align-content: flex-start; column-gap: 16px; row-gap: 34px;
-      max-width: 560px; margin: 0 auto; padding-bottom: 34px;
-      /* wooden ledge drawn under each 190px row (pitch = 190 + 34) */
-      background-image: repeating-linear-gradient(to bottom,
-        transparent 0, transparent 190px,
-        rgba(70,42,22,.0) 190px, rgba(70,42,22,.9) 193px,
-        rgba(40,24,12,.95) 205px, rgba(20,11,5,.6) 209px,
-        transparent 213px, transparent 224px);
+      position: relative; z-index: 2;
+      display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-auto-rows: 226px; column-gap: clamp(8px, 3vw, 16px);
+      align-items: end; justify-items: center;
+      width: min(100%, 560px); margin: 0 auto; padding: 0 6px 18px;
+      background-image:
+        repeating-linear-gradient(to bottom,
+          transparent 0 188px,
+          rgba(132,76,38,.76) 188px 191px,
+          #6d371b 191px 198px,
+          #3d1c0d 198px 207px,
+          rgba(8,3,1,.7) 207px 213px,
+          transparent 213px 226px),
+        repeating-linear-gradient(to bottom,
+          transparent 0 188px,
+          rgba(231,158,85,.14) 188px 189px,
+          transparent 189px 226px);
+      filter: drop-shadow(0 12px 16px rgba(0,0,0,.22));
     }
     .spine {
-      position: relative; width: 50px; height: 190px;
+      --spine-color: #35211b; --book-height: 188px; --book-tilt: 0deg;
+      position: relative; width: min(100%, 58px); height: var(--book-height);
+      align-self: end; margin-bottom: 38px;
       padding: 0; border: 0; font: inherit;
-      border-radius: 2px 4px 4px 2px; cursor: pointer;
+      border-radius: 2px 5px 5px 2px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 3px 4px 10px rgba(0,0,0,.55), inset -3px 0 6px rgba(0,0,0,.35),
-                  inset 2px 0 2px rgba(255,255,255,.10);
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.42), transparent 11%, rgba(255,255,255,.07) 23%, transparent 52%, rgba(0,0,0,.34) 100%),
+        repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.012) 3px 4px),
+        var(--spine-color);
+      box-shadow: 4px 5px 9px rgba(0,0,0,.62), 10px 10px 19px rgba(0,0,0,.25),
+                  inset -3px 0 5px rgba(0,0,0,.36), inset 2px 0 2px rgba(255,255,255,.11);
       transition: transform .22s cubic-bezier(0,0,.3,1), box-shadow .22s;
-      touch-action: manipulation; overflow: hidden;
+      transform: rotate(var(--book-tilt)); transform-origin: 50% 100%;
+      touch-action: manipulation; overflow: hidden; isolation: isolate;
     }
     .spine::before { /* head/tail band */
-      content: ''; position: absolute; left: 0; right: 0; top: 14px;
-      height: 1px; background: rgba(255,255,255,.18);
-      box-shadow: 0 162px 0 rgba(255,255,255,.18);
+      content: ''; position: absolute; left: 0; right: 0; top: 14px; z-index: 3;
+      height: 2px; background: linear-gradient(90deg, rgba(0,0,0,.25), rgba(255,255,255,.24), rgba(0,0,0,.22));
+      box-shadow: 0 calc(var(--book-height) - 30px) 0 rgba(255,255,255,.15);
     }
-    .spine:hover, .spine:focus { transform: translateY(-8px); box-shadow: 4px 10px 18px rgba(0,0,0,.6); }
+    .spine::after {
+      content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+      border: 1px solid rgba(255,255,255,.08); border-left-color: rgba(255,255,255,.15);
+      border-radius: inherit;
+      background: radial-gradient(ellipse at 55% -5%, rgba(255,255,255,.1), transparent 38%);
+    }
+    .spine:hover, .spine:focus { transform: translateY(-8px) rotate(0); box-shadow: 5px 13px 20px rgba(0,0,0,.72); }
     .spine:focus-visible, button:focus-visible {
       outline: 3px solid rgba(235,205,120,.9); outline-offset: 3px;
     }
-    .spine.opening { transform: translateY(-14px) scale(1.06); }
+    .spine.opening { opacity: .12; transform: translateY(-14px) scale(.96); }
     .spine-title {
-      writing-mode: vertical-rl; text-orientation: mixed;
-      font-size: 15px; font-weight: 700; letter-spacing: .1em;
-      line-height: 1.05; max-height: 150px; overflow: hidden;
-      text-shadow: 0 1px 2px rgba(0,0,0,.4);
+      position: absolute; z-index: 4; inset: 31px 3px 26px;
+      display: flex; flex-direction: row-reverse; align-items: center; justify-content: center;
+      gap: 1px; font-weight: 700; line-height: 1;
+      text-shadow: 0 1px 2px rgba(0,0,0,.72), 0 0 8px rgba(255,255,255,.08);
+    }
+    .spine-title-col {
+      writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap;
+      letter-spacing: .08em;
     }
     .spine-author {
-      position: absolute; bottom: 10px; left: 0; right: 0;
-      writing-mode: vertical-rl; margin: 0 auto; max-height: 76px;
-      font-size: 8.5px; letter-spacing: .08em; opacity: .72;
+      position: absolute; z-index: 4; bottom: 9px; right: 5px;
+      writing-mode: vertical-rl; max-height: 58px;
+      font-size: 7px; letter-spacing: .06em; opacity: .66;
       white-space: nowrap; overflow: hidden;
     }
     .spine-progress {
@@ -478,6 +521,49 @@
     }
     #shelf, #scene { transition: opacity .3s ease; }
     .fade-out { opacity: 0; }
+    body.book-transitioning { overflow: hidden; }
+    #book-transition {
+      position: fixed; inset: 0; z-index: 220; pointer-events: none;
+      perspective: 1400px; transform-style: preserve-3d;
+    }
+    .book-flight {
+      position: fixed; transform-style: preserve-3d; border-radius: 4px 8px 8px 4px;
+      filter: drop-shadow(0 18px 22px rgba(0,0,0,.62));
+    }
+    .book-flight-paper, .book-flight-cover {
+      position: absolute; inset: 0; border-radius: inherit;
+    }
+    .book-flight-paper {
+      background: linear-gradient(90deg, #c7b78f, #f1e7cc 5%, #fbf5e5 96%, #b7a477);
+      box-shadow: inset -10px 0 14px rgba(80,50,24,.22), inset 0 0 0 1px rgba(70,45,25,.22);
+    }
+    .book-flight-paper::after {
+      content: ''; position: absolute; top: 5px; right: -4px; bottom: 5px; width: 8px;
+      background: repeating-linear-gradient(0deg, #e8dcc0 0 2px, #cdbd98 2px 3px);
+      border-radius: 0 3px 3px 0;
+    }
+    .book-flight-cover {
+      transform-origin: 100% 50%; transform: rotateY(0deg); backface-visibility: hidden;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.4), transparent 9%, rgba(255,255,255,.08) 24%, transparent 58%, rgba(0,0,0,.3)),
+        repeating-linear-gradient(0deg, transparent 0 4px, rgba(255,255,255,.014) 4px 5px),
+        var(--flight-color, #34211c);
+      box-shadow: inset -5px 0 8px rgba(0,0,0,.38), inset 2px 0 2px rgba(255,255,255,.1), 0 0 0 1px rgba(0,0,0,.34);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .book-flight-cover::before {
+      content: ''; position: absolute; inset: 14px; border: 1px solid var(--flight-accent, rgba(245,230,200,.52));
+      border-radius: 2px; opacity: .72;
+    }
+    .book-flight-title {
+      position: relative; z-index: 2; display: flex; flex-direction: row-reverse; gap: .2em;
+      color: var(--flight-accent, #f2e6cc); font-weight: 700; font-size: clamp(19px, 7vw, 34px);
+      text-shadow: 0 2px 8px rgba(0,0,0,.7);
+    }
+    .book-flight-title > span { writing-mode: vertical-rl; white-space: nowrap; letter-spacing: .12em; }
+    @media (prefers-reduced-motion: reduce) {
+      #book-transition { display: none !important; }
+    }
 
     #ep-sel, #nav, #jump-wrap { transition: opacity .2s ease; }
     #scene.chrome-hidden #ep-sel,
@@ -759,7 +845,7 @@ function paginate(paras, mb) {
   const out = [];
   let buf = [];
   const setb = a => { mb.innerHTML = a.map(x => `<p>${x.text}</p>`).join(''); };
-  const fits = () => mb.scrollWidth <= mb.clientWidth + 1;
+  const fits = () => mb.scrollWidth <= mb.clientWidth;
 
   for (const para of paras) {
     buf.push(para); setb(buf);
@@ -898,7 +984,7 @@ function render(el, i) {
       <div class="cvr-body">
         <div class="cvr-genre">${BOOK.genre}</div>
         <div class="cvr-titles">
-          <div class="cvr-title" style="font-size:min(12vw, ${coverTitleFont(BOOK.title)}px)">${BOOK.title}</div>
+          ${verticalTitleMarkup(BOOK.title, 'cover')}
           <div class="cvr-sub">${BOOK.sub}</div>
         </div>
         <div class="cvr-div"></div>
@@ -907,6 +993,7 @@ function render(el, i) {
         <div class="cvr-author">著　${BOOK.author}</div>
         <div class="cvr-pub">${BOOK.pub}</div>
       </div>`;
+    fitCoverTitle(el);
 
   } else if (d.t === 'ch') {
     el.innerHTML = `
@@ -967,7 +1054,11 @@ function loadEpisode(idx) {
   const ep = window.EPISODE_REGISTRY[idx];
   BOOK = ep.book; CHAPTERS = ep.chapters;
   busy = false; openChap = null;
-  build(); buildJump(); buildEpSel();
+  // The chapter jump depends on SECTIONS, which build() creates. Build once to
+  // create that data, populate the reader chrome, then paginate again against
+  // the final Grid row sizes. Without the second pass, the first open can be
+  // split into thousands of tiny pages.
+  build(); buildJump(); buildEpSel(); build();
   const saved = readProgressMap()[ep.id];
   cur = saved ? findPageByAnchor(saved.anchor) : 0;
   jumpEl.scrollLeft = 0;
@@ -993,27 +1084,78 @@ function spineColor(book) {
 function spineAccent(book) {
   return (book.shelf && book.shelf.accent) || 'rgba(245,240,228,.92)';
 }
-// Shrink the (vertical) title font as the text grows, so a long title still
-// fits in roughly two columns instead of spilling across the spine.
-// Vertical advance per char ≈ font-size × 1.12 (incl. .1em letter-spacing);
-// the usable column height is ~150px (matches .spine-title max-height).
-function spineTitleFont(title) {
-  const len = [...(title || '')].length;       // code-point count (CJK-safe)
-  const COL_H = 150, PER_CHAR = 1.12, MAX = 15, MIN = 8, TARGET_COLS = 2;
-  const charsPerCol = Math.ceil(len / TARGET_COLS);
-  const fit = Math.floor(COL_H / (PER_CHAR * charsPerCol));
-  return Math.max(MIN, Math.min(MAX, fit));
+// Explicitly balance vertical title columns. Browser-driven wrapping produced
+// short orphan columns and different breaks depending on font load timing.
+function verticalTitleLayout(title, mode = 'spine') {
+  const chars = [...(title || '')];
+  const len = chars.length;
+  let columns, fontSize;
+  if (mode === 'cover') {
+    columns = len <= 9 ? 1 : len <= 18 ? 2 : len <= 27 ? 3 : 4;
+    fontSize = len <= 9 ? 48 : len <= 18 ? 36 : 28;
+  } else {
+    columns = len <= 9 ? 1 : len <= 18 ? 2 : 3;
+    fontSize = columns === 1 ? 15 : columns === 2 ? 11.5 : 8.5;
+  }
+  columns = Math.min(columns, Math.max(1, len));
+  const base = Math.floor(len / columns), extra = len % columns;
+  const parts = [];
+  let offset = 0;
+  for (let i = 0; i < columns; i++) {
+    const size = base + (i < extra ? 1 : 0);
+    parts.push(chars.slice(offset, offset + size).join(''));
+    offset += size;
+  }
+  return { parts, fontSize };
 }
-// Same idea for the opened book cover: scale the (vertical) title down for long
-// titles so it stays around two columns instead of filling the whole cover.
-// Usable body height ≈ 430px; vertical advance per char ≈ font × 1.22 (.22em
-// letter-spacing). The min(12vw, …) below keeps it responsive on narrow screens.
-function coverTitleFont(title) {
-  const len = [...(title || '')].length;
-  const BODY_H = 430, PER_CHAR = 1.22, MAX = 48, MIN = 22, TARGET_COLS = 2;
-  const charsPerCol = Math.ceil(len / TARGET_COLS);
-  const fit = Math.floor(BODY_H / (PER_CHAR * charsPerCol));
-  return Math.max(MIN, Math.min(MAX, fit));
+
+function verticalTitleMarkup(title, mode = 'spine', className = '') {
+  const layout = verticalTitleLayout(title, mode);
+  const outer = className || (mode === 'cover' ? 'cvr-title' : 'spine-title');
+  const col = mode === 'cover' ? 'cvr-title-col' : 'spine-title-col';
+  const size = mode === 'cover'
+    ? `min(12vw, ${layout.fontSize}px)`
+    : `${layout.fontSize}px`;
+  return `<span class="${outer}" data-max-font="${layout.fontSize}" style="font-size:${size}">` +
+    layout.parts.map(part => `<span class="${col}">${part}</span>`).join('') +
+    `</span>`;
+}
+
+// Fit an opened-book title to the cover that is actually available after the
+// responsive reader Grid has settled. This handles short-height phones as well
+// as long titles without relying on viewport width alone.
+function fitCoverTitle(page) {
+  const body = page.querySelector('.cvr-body');
+  const group = page.querySelector('.cvr-titles');
+  const title = page.querySelector('.cvr-title');
+  if (!body || !group || !title || !body.clientWidth || !body.clientHeight) return;
+
+  const max = Math.min(Number(title.dataset.maxFont) || 48, innerWidth * .12);
+  const min = Math.min(16, max);
+  const fits = size => {
+    title.style.fontSize = `${size}px`;
+    const br = body.getBoundingClientRect();
+    const gr = group.getBoundingClientRect();
+    return gr.top >= br.top + 1 && gr.bottom <= br.bottom - 1 &&
+      gr.left >= br.left + 1 && gr.right <= br.right - 1;
+  };
+
+  let low = min, high = max, best = min;
+  for (let step = 0; step < 8; step++) {
+    const mid = (low + high) / 2;
+    if (fits(mid)) { best = mid; low = mid; }
+    else high = mid;
+  }
+  title.style.fontSize = `${Math.floor(best * 10) / 10}px`;
+}
+
+function bookVariation(title) {
+  let hash = 0;
+  for (const ch of title || '') hash = (hash * 33 + ch.charCodeAt(0)) >>> 0;
+  return {
+    height: 178 + hash % 15,
+    tilt: ((hash >>> 5) % 17 - 8) / 10,
+  };
 }
 
 function buildShelf() {
@@ -1025,10 +1167,11 @@ function buildShelf() {
     const author = b.author || '';
     const percent = Math.max(0, Math.min(100, progress[ep.id]?.percent || 0));
     const progressLabel = percent > 0 ? `、読了率${percent}%` : '';
+    const variation = bookVariation(title);
     return (
       `<button type="button" class="spine" data-idx="${i}" aria-label="${title} ${author}${progressLabel}" ` +
-        `style="background:${spineColor(b)};color:${spineAccent(b)}">` +
-        `<span class="spine-title" style="font-size:${spineTitleFont(title)}px">${title}</span>` +
+        `style="--spine-color:${spineColor(b)};--book-height:${variation.height}px;--book-tilt:${variation.tilt}deg;color:${spineAccent(b)}">` +
+        verticalTitleMarkup(title) +
         (author ? `<span class="spine-author">${author}</span>` : '') +
         (percent > 0 ? `<span class="spine-progress" aria-hidden="true"><span style="width:${percent}%"></span></span>` : '') +
       `</button>`
@@ -1036,13 +1179,97 @@ function buildShelf() {
   }).join('');
 }
 
-function showShelf() {
+const prefersReducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function runAnimation(el, keyframes, options) {
+  if (!el || !el.animate) return Promise.resolve();
+  const animation = el.animate(keyframes, options);
+  return animation.finished.catch(() => {});
+}
+
+function createBookFlight(book, rect, coverAngle = 0) {
+  const host = document.createElement('div');
+  host.id = 'book-transition';
+  const flight = document.createElement('div');
+  flight.className = 'book-flight';
+  flight.style.cssText = `left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;` +
+    `--flight-color:${spineColor(book)};--flight-accent:${spineAccent(book)};transform-origin:0 0;`;
+  flight.innerHTML = `<div class="book-flight-paper"></div>` +
+    `<div class="book-flight-cover" style="transform:rotateY(${coverAngle}deg)">` +
+      verticalTitleMarkup(book.title || '', 'cover', 'book-flight-title') +
+    `</div>`;
+  host.appendChild(flight);
+  document.body.appendChild(host);
+  return { host, flight, cover: flight.querySelector('.book-flight-cover') };
+}
+
+function flightTransform(from, to) {
+  return `translate(${from.left - to.left}px,${from.top - to.top}px) ` +
+    `scale(${from.width / to.width},${from.height / to.height})`;
+}
+
+async function closeBook() {
+  if (appMode !== 'reader' || opening) return;
+  opening = true;
+  saveProgress();
+  setScene(null);
+  document.body.classList.add('book-transitioning');
+
+  const book = BOOK;
+  const pageRect = pw.getBoundingClientRect();
+  buildShelf();
+  shelfEl.classList.add('visible');
+  shelfEl.classList.remove('fade-out');
+  shelfEl.style.opacity = '0';
+  const row = Math.floor(currentEpIdx / 5);
+  shelfEl.scrollTop = Math.max(0, row * 226 - Math.max(24, (innerHeight - 226) / 2));
+  const target = rackEl.querySelector(`.spine[data-idx="${currentEpIdx}"]`);
+  if (target) target.classList.add('opening');
+  const targetRect = target ? target.getBoundingClientRect() : pageRect;
+
+  if (prefersReducedMotion()) {
+    sceneEl.style.display = 'none';
+    shelfEl.style.opacity = '';
+    if (target) target.classList.remove('opening');
+    appMode = 'shelf'; opening = false;
+    document.body.classList.remove('book-transitioning');
+    return;
+  }
+
+  const { host, flight, cover } = createBookFlight(book, pageRect, 104);
+  await runAnimation(cover,
+    [{ transform: 'rotateY(104deg)' }, { transform: 'rotateY(0deg)' }],
+    { duration: 460, easing: 'cubic-bezier(.35,0,.2,1)', fill: 'forwards' });
+
+  shelfEl.style.opacity = '1';
+  sceneEl.style.opacity = '0';
+  await Promise.all([
+    runAnimation(flight,
+      [{ transform: 'none' }, { transform: flightTransform(targetRect, pageRect) }],
+      { duration: 540, easing: 'cubic-bezier(.6,0,.25,1)', fill: 'forwards' }),
+    wait(330),
+  ]);
+
+  host.remove();
+  sceneEl.style.display = 'none';
+  sceneEl.style.opacity = '';
+  shelfEl.style.opacity = '';
+  if (target) target.classList.remove('opening');
+  appMode = 'shelf'; opening = false;
+  document.body.classList.remove('book-transitioning');
+}
+
+function showShelf(animate = true) {
+  if (animate && appMode === 'reader') { closeBook(); return; }
   if (appMode === 'reader') saveProgress();
   appMode = 'shelf';
   setScene(null);                 // clear reader background + particles
   sceneEl.style.display = 'none';
+  sceneEl.style.opacity = '';
   shelfEl.classList.add('visible');
   shelfEl.classList.remove('fade-out');
+  shelfEl.style.opacity = '';
   buildShelf();
 }
 window.showShelf = showShelf;
@@ -1053,16 +1280,49 @@ async function openBook(idx) {
   if (opening || appMode === 'reader') return;
   opening = true;
   const spine = rackEl.querySelector(`.spine[data-idx="${idx}"]`);
+  const startRect = spine ? spine.getBoundingClientRect() : null;
   if (spine) spine.classList.add('opening');
+  document.body.classList.add('book-transitioning');
   // Pagination needs real font metrics; wait (with a fallback) before build().
   if (document.fonts && document.fonts.ready) {
     await Promise.race([document.fonts.ready.catch(() => {}), new Promise(r => setTimeout(r, 1500))]);
   }
   await ensureEpisodeLoaded(idx);
-  shelfEl.classList.remove('visible');
   sceneEl.style.display = '';
+  sceneEl.style.opacity = '0';
   appMode = 'reader';
   loadEpisode(idx);
+  sceneEl.classList.remove('chrome-hidden');
+
+  if (!startRect || prefersReducedMotion()) {
+    shelfEl.classList.remove('visible');
+    sceneEl.style.opacity = '';
+    document.body.classList.remove('book-transitioning');
+    opening = false;
+    return;
+  }
+
+  const pageRect = pw.getBoundingClientRect();
+  const book = window.EPISODE_REGISTRY[idx].book || {};
+  const { host, flight, cover } = createBookFlight(book, pageRect, 0);
+  await runAnimation(flight,
+    [{ transform: flightTransform(startRect, pageRect) }, { transform: 'none' }],
+    { duration: 520, easing: 'cubic-bezier(.22,.72,.2,1)', fill: 'forwards' });
+
+  shelfEl.style.opacity = '0';
+  sceneEl.style.opacity = '1';
+  await Promise.all([
+    runAnimation(cover,
+      [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(104deg)' }],
+      { duration: 560, easing: 'cubic-bezier(.4,0,.15,1)', fill: 'forwards' }),
+    wait(340),
+  ]);
+
+  host.remove();
+  shelfEl.classList.remove('visible');
+  shelfEl.style.opacity = '';
+  sceneEl.style.opacity = '';
+  document.body.classList.remove('book-transitioning');
   opening = false;
 }
 window.openBook = openBook;
